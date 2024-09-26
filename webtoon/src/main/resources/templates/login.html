@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" th:href="@{/css/login.css}">
+</head>
+<body>
+<div class="login-container">
+    <h2>Login</h2>
+
+    <form id="loginForm" th:action="@{/login}" method="post" class="login-form">
+        <div class="form-group">
+            <input type="text" id="username" name="username" placeholder="아이디">
+            <span class="error-message" id="usernameError"></span> <!-- 에러 메시지를 인라인으로 표시 -->
+        </div>
+        <div class="form-group">
+            <input type="password" id="password" name="password" placeholder="비밀번호">
+            <span class="error-message" id="passwordError"></span> <!-- 에러 메시지를 인라인으로 표시 -->
+        </div>
+        <div class="form-group">
+            <button type="submit" id="loginBtn">Login</button>
+        </div>
+    </form>
+</div>
+
+<!-- JavaScript 파일 로드 -->
+<script src="/js/login.js"></script>
+</body>
+</html>

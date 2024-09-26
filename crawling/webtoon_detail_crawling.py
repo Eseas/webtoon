@@ -45,7 +45,7 @@ output_dir = os.path.join(os.getcwd(), 'crawling', 'result')
 os.makedirs(output_dir, exist_ok=True)
 
 # 결과를 저장할 CSV 파일 경로
-detail_info_file = os.path.join(output_dir, "kakaopage_webtoons_finish_crawl_result_updated.csv")
+detail_info_file = os.path.join(output_dir, "kakaopage_webtoons_finish_crawl_result_1.csv")
 
 file_exists = os.path.isfile(detail_info_file)
 
@@ -71,7 +71,6 @@ base_image_path = os.path.join(os.getcwd(), 'webtoon', 'src', 'main', 'resources
 
 # 일정 크롤링 후 브라우저를 새로 고침
 REFRESH_LIMIT = 100  # 100개마다 새로고침
-START_INDEX = 3083  # Start from the 755th item
 
 # 이미지 다운로드 함수
 def download_image(image_url, image_filename, max_retries=3):
@@ -92,12 +91,6 @@ def download_image(image_url, image_filename, max_retries=3):
         time.sleep(2)  # 재시도 전 잠깐 대기
     return False
 
-# 쉼표를 제거하는 함수
-def remove_commas(text):
-    if isinstance(text, str):
-        return text.replace(",", "")  # 쉼표를 제거
-    return text
-
 # 상세 정보를 저장할 CSV 파일 열기
 with open(detail_info_file, mode="a", newline='', encoding='utf-8') as file:
     writer = csv.writer(file)
@@ -107,23 +100,24 @@ with open(detail_info_file, mode="a", newline='', encoding='utf-8') as file:
         writer.writerow(["contentid", "title", "author", "total_episodes", "age_limit", "serialization_status", "cycle", "badges", "brief_text", "hashtags"])
 
     # 각 contentId에 대해 크롤링 수행
-    for index, content_id in enumerate(content_ids):
+    #for index, content_id in enumerate(content_ids):
+    #for index, content_id in enumerate(content_ids[1042:], start=1043):
+    #for index, content_id in enumerate(content_ids[1538:], start=1539):
+    #for index, content_id in enumerate(content_ids[1652:], start=1653):
+    for index, content_id in enumerate(content_ids[:1042], start=0):
         try:
-            if index < START_INDEX:
-            # Skip items before START_INDEX
-                continue
             url = f"https://page.kakao.com/content/{content_id}"
             driver.get(url)
             time.sleep(2)
 
             try:
-                title = remove_commas(driver.find_element(By.CSS_SELECTOR, "span.font-large3-bold.mb-3pxr.text-ellipsis.break-all.text-el-70.line-clamp-2").text)
+                title = driver.find_element(By.CSS_SELECTOR, "span.font-large3-bold.mb-3pxr.text-ellipsis.break-all.text-el-70.line-clamp-2").text
             except:
                 title = '정보없음'
     
             # 연재주기 추출 및 저장
             try:
-                serialization_cycle = remove_commas(driver.find_element(By.CSS_SELECTOR, "div.mt-6pxr.flex.items-center span.font-small2.text-el-70.opacity-70").text)
+                serialization_cycle = driver.find_element(By.CSS_SELECTOR, "div.mt-6pxr.flex.items-center span.font-small2.text-el-70.opacity-70").text
                 if "완결" in serialization_cycle:
                     serialization_status = "완결"
                     cycle = "완결"
@@ -134,13 +128,12 @@ with open(detail_info_file, mode="a", newline='', encoding='utf-8') as file:
                 serialization_status = "정보없음"
                 cycle = "정보없음"
     
+            # 총 편수 추출
             try:
                 total_episodes_text = driver.find_element(By.CSS_SELECTOR, "span.text-ellipsis.break-all.line-clamp-1.font-small2-bold.text-el-70").text
-                # 쉼표를 제거한 후 정수로 변환
-                total_episodes = int(remove_commas(total_episodes_text.replace("전체 ", "").strip()))
+                total_episodes = int(total_episodes_text.replace("전체 ", "").strip())
             except:
                 total_episodes = '정보없음'
-
     
             # 뱃지 구분: 3다무, 기다무 여부 확인
             badges = []
@@ -163,7 +156,7 @@ with open(detail_info_file, mode="a", newline='', encoding='utf-8') as file:
     
             # brief_text 추출 및 줄바꿈 문자 제거
             try:
-                brief_text = remove_commas(driver.find_element(By.CSS_SELECTOR, "span.font-small1.mb-8pxr.block.whitespace-pre-wrap.break-words.text-el-70").text)
+                brief_text = driver.find_element(By.CSS_SELECTOR, "span.font-small1.mb-8pxr.block.whitespace-pre-wrap.break-words.text-el-70").text
                 brief_text = brief_text.replace('\n', '<br>')
             except:
                 brief_text = '정보없음'
@@ -171,42 +164,29 @@ with open(detail_info_file, mode="a", newline='', encoding='utf-8') as file:
             # 해시태그 추출 및 이어붙이기
             try:
                 hashtags_elements = driver.find_elements(By.CSS_SELECTOR, "span.font-small2-bold.text-ellipsis.text-el-70.line-clamp-1")
-                hashtags = " ".join([remove_commas(element.text) for element in hashtags_elements if "기다무 대여권" not in element.text])
-                if not hashtags.strip():  # 해시태그가 빈 문자열이거나 공백만 있으면
-                    hashtags = '정보없음'
+                hashtags = " ".join([element.text for element in hashtags_elements if "기다무 대여권" not in element.text])
             except:
                 hashtags = '정보없음'
     
             # about 페이지에서 작가 정보 추출
             try:
-                # 글 작가 추출
+                writer_name = driver.find_element(By.XPATH, "//span[text()='글']/following-sibling::span").text
+                artist = driver.find_element(By.XPATH, "//span[text()='그림']/following-sibling::span").text
+                original_author = None
                 try:
-                    writer_name = remove_commas(driver.find_element(By.XPATH, "//span[text()='글']/following-sibling::span").text)
+                    original_author = driver.find_element(By.XPATH, "//span[text()='원작']/following-sibling::span").text
                 except:
-                    writer_name = '정보없음'
-
-                # 그림 작가 추출
-                try:
-                    artist = remove_commas(driver.find_element(By.XPATH, "//span[text()='그림']/following-sibling::span").text)
-                except:
-                    artist = '정보없음'
-
-                # 원작 작가 추출
-                try:
-                    original_author = remove_commas(driver.find_element(By.XPATH, "//span[text()='원작']/following-sibling::span").text)
-                except:
-                    original_author = None  # 원작 작가는 존재하지 않을 수 있으므로 None 처리
-
-                # 작가 정보를 적절히 포맷팅
+                    pass
                 if original_author:
-                    author = f"{writer_name} (글) / {artist} (그림) / {original_author} (원작)"
+                    author = f"{writer_name} (글)/ {artist} (그림)/ {original_author} (원작)"
                 else:
-                    author = f"{writer_name} (글) / {artist} (그림)"
+                    author = f"{writer_name} (글)/ {artist} (그림)"
             except:
                 author = '정보없음'
     
             # 해당 웹툰의 연령 제한 가져오기
             age_limit = age_limits[index]
+            
             '''
             try:
                 image_element = WebDriverWait(driver, 10).until(
@@ -217,7 +197,7 @@ with open(detail_info_file, mode="a", newline='', encoding='utf-8') as file:
                     image_url = "https:" + image_url
             except:
                 image_url = None
-    
+            
             # 이미지 다운로드 부분
             if image_url:
                 # 폴더 생성
@@ -233,24 +213,12 @@ with open(detail_info_file, mode="a", newline='', encoding='utf-8') as file:
             else:
                 print(f"이미지 URL을 찾을 수 없습니다: {content_id}")
             '''
-            # CSV 파일에 저장 (쉼표 제거 후)
-            writer.writerow([
-                content_id, 
-                remove_commas(title), 
-                remove_commas(author), 
-                total_episodes, 
-                age_limit, 
-                remove_commas(serialization_status), 
-                remove_commas(cycle), 
-                remove_commas(badges_str), 
-                remove_commas(brief_text), 
-                remove_commas(hashtags)
-            ])
+            # CSV 파일에 저장
+            writer.writerow([content_id, title, author, total_episodes, age_limit, serialization_status, cycle, badges_str, brief_text, hashtags])
     
             # 진행 상황 퍼센트로 출력
-            progress_percentage = (index + 1) / total_webtoons * 100
-            print(f"Content ID: {content_id}, Title: {title}, Author: {author}, Episodes: {total_episodes}, Age Limit: {age_limit}, Status: {serialization_status}, Cycle: {cycle}, Badges: {badges_str}, Brief: {brief_text}, Hashtags: {hashtags}")
-            print(f"진행 상황: {progress_percentage:.2f}% 완료 ({index + 1}/{total_webtoons})")
+            progress_percentage = (index + 1) / 1042 * 100
+            print(f"진행 상황: {progress_percentage:.2f}% 완료 ({index + 1}/{1042})")
         except WebDriverException as e:
             print(f"WebDriverException 발생. 재시도 중... {content_id}, 오류: {e}")
             driver.quit()  # 브라우저 종료

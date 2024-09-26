@@ -62,7 +62,6 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,macos
 
-
 /.idea/
 /.env
 /webtoon/src/main/resources/application.properties

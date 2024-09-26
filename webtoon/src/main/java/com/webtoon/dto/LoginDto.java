@@ -1,4 +1,4 @@
-package com.webtoon.domain.User;
+package com.webtoon.dto;
 
 public class LoginDto {
     private String id;
