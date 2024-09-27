@@ -3,23 +3,6 @@ import json
 import pandas as pd
 import csv  # 추가: CSV 처리를 위한 모듈
 import time
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-
-# 셀레니움 설정 (필요한 경우만 유지)
-chrome_options = Options()
-chrome_options.add_argument("--window-size=1920,1080")
-chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument("--disable-dev-shm-usage")
-
-# 웹드라이버 설치 및 실행 (필요한 경우만 유지)
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-
 # PostgreSQL 연결 설정
 conn = psycopg2.connect(
     host="localhost",
@@ -35,7 +18,8 @@ cur.execute("SET client_encoding TO 'UTF8';")
 
 # 작가 정보를 JSON으로 변환하는 함수
 def parse_authors(author_string):
-    authors = author_string.split('/')
+    print(author_string)
+    authors = author_string.split('/') if '/' in author_string else [author_string]  # '/'로 구분되지 않으면 전체 문자열을 리스트로 처리
     author_dict = {}
     for author in authors:
         if '(글)' in author:
@@ -80,36 +64,52 @@ def map_cycle(cycle_str):
     # 공백 제거 및 매핑
     return cycle_mapping.get(cycle_str.strip(), 0)  # 기본값은 0 (완결)
 
-# 크롤링된 데이터를 저장할 함수
+# 웹툰이 이미 존재하는지 확인하는 함수
+def check_webtoon_exists(contentid):
+    cur.execute("SELECT EXISTS(SELECT 1 FROM webtoon.kakao_webtoon WHERE id = %s)", (contentid,))
+    return cur.fetchone()[0]
+
 def insert_webtoon_data(contentid, title, author_string, total_episodes, age_limit, serialization_status, cycle, badges, brief_text, hashtags):
-    author_json = parse_authors(author_string)
-    hashtags_list = hashtags.split(' ')  # 해시태그가 공백으로 구분되어 있다고 가정
+    try:
+        # 이미 존재하는지 확인
+        if check_webtoon_exists(contentid):
+            print(f"ContentID {contentid} already exists. Skipping insertion.")
+            return
 
-    # cycle 매핑
-    mapped_cycle = map_cycle(cycle)
+        # 작가 정보 파싱 (예외 처리된 함수 사용)
+        author_json = parse_authors(author_string)
+        hashtags_list = hashtags.split(' ')  # 해시태그가 공백으로 구분되어 있다고 가정
 
-    insert_query = '''
-    INSERT INTO webtoon.kakao_webtoon (id, title, author, total_episodes, status, upload_cycle, age_limit, biref_text, hashtags, created_dt, created_id, updated_dt, updated_id)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s, NOW(), %s)
-    '''
+        # cycle 매핑
+        mapped_cycle = map_cycle(cycle)
+
+        insert_query = '''
+        INSERT INTO webtoon.kakao_webtoon (id, title, author, total_episodes, status, upload_cycle, age_limit, biref_text, hashtags, created_dt, created_id, updated_dt, updated_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s, NOW(), %s)
+        '''
+        
+        data = (
+            contentid,
+            title,
+            author_json,
+            total_episodes,
+            serialization_status,
+            mapped_cycle,  # 매핑된 cycle 값 사용
+            age_limit,
+            brief_text,
+            json.dumps(hashtags_list),
+            'system',
+            'system'
+        )
+
+        cur.execute(insert_query, data)
+
+        update_or_insert_hashtags(contentid, hashtags_list)
+        print(f"ContentID {contentid} inserted successfully.")
     
-    data = (
-        contentid,
-        title,
-        author_json,
-        total_episodes,
-        serialization_status,
-        mapped_cycle,  # 매핑된 cycle 값 사용
-        age_limit,
-        brief_text,
-        json.dumps(hashtags_list),
-        'system',
-        'system'
-    )
-
-    cur.execute(insert_query, data)
-
-    update_or_insert_hashtags(contentid, hashtags_list)
+    except Exception as e:
+        # 오류가 발생한 경우 해당 데이터를 건너뛰고 로그 출력
+        print(f"Error inserting contentid {contentid}: {e}")
 
 # CSV 파일을 읽고 한 줄씩 삽입하는 함수
 def process_csv_and_insert():
@@ -118,21 +118,27 @@ def process_csv_and_insert():
 
     total_rows = len(df)  # 총 행 수
     for index, row in df.iterrows():
-        insert_webtoon_data(
-            contentid=row['contentid'],
-            title=row['title'],
-            author_string=row['author'],
-            total_episodes=row['total_episodes'],
-            age_limit=row['age_limit'],
-            serialization_status=row['serialization_status'],
-            cycle=row['cycle'],  # 이미 매핑된 값인지 확인 필요
-            badges=row['badges'],
-            brief_text=row['brief_text'],
-            hashtags=row['hashtags']
-        )
-        # 진행 상황을 퍼센트로 출력
-        progress = ((index + 1) / total_rows) * 100
-        print(f"Progress: {index + 1} : {progress:.2f}%")  # 소수점 2자리까지 출력
+        try:
+            insert_webtoon_data(
+                contentid=row['contentid'],
+                title=row['title'],
+                author_string=row['author'],
+                total_episodes=row['total_episodes'],
+                age_limit=row['age_limit'],
+                serialization_status=row['serialization_status'],
+                cycle=row['cycle'],  # 이미 매핑된 값인지 확인 필요
+                badges=row['badges'],
+                brief_text=row['brief_text'],
+                hashtags=row['hashtags']
+            )
+            # 진행 상황을 퍼센트로 출력
+            progress = ((index + 1) / total_rows) * 100
+            print(f"Progress: {index + 1} : {progress:.2f}%")  # 소수점 2자리까지 출력
+
+        except Exception as e:
+            # 데이터 삽입 중에 발생하는 모든 예외를 처리하고 해당 데이터 건너뛰기
+            print(f"Error processing row {index + 1}: {e}")
+            continue  # 오류 발생 시 해당 행을 건너뛰고 다음 행으로 진행
 
     conn.commit()
 

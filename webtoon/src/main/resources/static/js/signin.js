@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
+    const usernameInput = document.getElementById('id');
+    const passwordInput = document.getElementById('pwd');
     const usernameError = document.getElementById('usernameError');
     const passwordError = document.getElementById('passwordError');
 

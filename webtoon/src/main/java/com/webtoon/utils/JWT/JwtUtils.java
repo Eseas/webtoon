@@ -16,8 +16,6 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
 
-import static org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties.*;
-
 @Service
 @Slf4j
 public class JwtUtils {
@@ -37,12 +35,20 @@ public class JwtUtils {
     }
 
     public String generateAccessToken(String id, String pwd) throws Exception {
+        return generateJWT(id, pwd, accessTokenValiditySeconds);
+    }
+
+    public String generateRefreshToken(String id, String pwd) throws Exception {
+        return generateJWT(id, pwd, refreshTokenValiditySeconds);
+    }
+
+    private String generateJWT(String id, String pwd, long TokenValiditySeconds) throws JOSEException {
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .subject(id)
                 .issueTime(new Date())
                 .claim("id", id)
                 .claim("pwd", pwd)
-                .expirationTime(new Date(System.currentTimeMillis() + accessTokenValiditySeconds)) // 10분 유효
+                .expirationTime(new Date(System.currentTimeMillis() + TokenValiditySeconds)) // 10분 유효
                 .build();
 
         JWEHeader header = new JWEHeader(JWEAlgorithm.DIR, EncryptionMethod.A256GCM);

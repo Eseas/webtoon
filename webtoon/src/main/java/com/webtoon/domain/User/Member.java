@@ -19,7 +19,7 @@ public class Member {
     private Long id;
 
     @Column(name = "login_id", unique = true, nullable = false, length = 50)
-    private String login_id;
+    private String loginId;
 
     @Column(name = "pwd", nullable = false, length = 50)
     private String pwd;
@@ -66,9 +66,9 @@ public class Member {
     private String social_token;
 
     @Builder
-    public Member(Long id, String login_id, String pwd, String first_name, String last_name, String email, String reg_no, Short age, String phone_num, Short wrong_pwd_cnt, String using_state, Date created_dt, String created_id, Date updated_dt, String updated_id, String social_token) {
+    public Member(Long id, String loginId, String pwd, String first_name, String last_name, String email, String reg_no, Short age, String phone_num, Short wrong_pwd_cnt, String using_state, Date created_dt, String created_id, Date updated_dt, String updated_id, String social_token) {
         this.id = id;
-        this.login_id = login_id;
+        this.loginId = loginId;
         this.pwd = pwd;
         this.first_name = first_name;
         this.last_name = last_name;

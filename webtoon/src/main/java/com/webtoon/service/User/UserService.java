@@ -1,5 +1,7 @@
 package com.webtoon.service.User;
 
-public interface UserService {
+import com.webtoon.dto.LoginDto;
 
+public interface UserService {
+    boolean loginCheck(LoginDto loginDto);
 }

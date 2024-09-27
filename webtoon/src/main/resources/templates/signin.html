@@ -4,19 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <link rel="stylesheet" th:href="@{/css/login.css}">
+    <link rel="stylesheet" th:href="@{/css/signin.css}">
 </head>
 <body>
 <div class="login-container">
     <h2>Login</h2>
 
-    <form id="loginForm" th:action="@{/login}" method="post" class="login-form">
+    <form id="loginForm" th:action="@{/signin}" method="post" class="login-form">
         <div class="form-group">
-            <input type="text" id="username" name="username" placeholder="아이디">
+            <input type="text" id="id" name="id" placeholder="아이디" autofocus>
             <span class="error-message" id="usernameError"></span> <!-- 에러 메시지를 인라인으로 표시 -->
         </div>
         <div class="form-group">
-            <input type="password" id="password" name="password" placeholder="비밀번호">
+            <input type="password" id="pwd" name="pwd" placeholder="비밀번호">
             <span class="error-message" id="passwordError"></span> <!-- 에러 메시지를 인라인으로 표시 -->
         </div>
         <div class="form-group">
@@ -26,6 +26,6 @@
 </div>
 
 <!-- JavaScript 파일 로드 -->
-<script src="/js/login.js"></script>
+<script src="/js/signin.js"></script>
 </body>
 </html>
