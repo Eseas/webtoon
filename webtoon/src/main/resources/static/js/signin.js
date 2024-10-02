@@ -30,3 +30,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+document.getElementById('google-login-btn').addEventListener('click', async function() {
+    try {
+        // 서버에서 Google OAuth 설정을 받아옴
+        const response = await fetch('/api/google-config');
+        const config = await response.json();
+
+        const googleClientId = config.clientId;
+        const googleRedirectUrl = config.redirectUrl;
+
+        // 구글 OAuth 인증 URL 생성
+        const url = 'https://accounts.google.com/o/oauth2/v2/auth?client_id='
+            + googleClientId
+            + '&redirect_uri='
+            + googleRedirectUrl
+            + '&response_type=code'
+            + '&scope=email profile';
+
+        // 팝업 창 열기
+        window.open(url, '_blank', 'width=500,height=600');
+    } catch (error) {
+        console.error('Error fetching Google config:', error);
+    }
+});

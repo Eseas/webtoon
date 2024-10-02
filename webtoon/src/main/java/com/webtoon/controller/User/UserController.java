@@ -1,5 +1,6 @@
 package com.webtoon.controller.User;
 
+import com.webtoon.dto.GoogleAccountProfileResponse;
 import com.webtoon.dto.LoginDto;
 import com.webtoon.domain.User.Member;
 import com.webtoon.dto.LoginFormDto;
@@ -13,19 +14,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AuthorizationServiceException;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
 
 @Controller
 @Slf4j
@@ -39,8 +33,6 @@ public class UserController {
     private RedisUtils redisUtils;
     @Autowired
     private LoginValidator loginValidator;
-    @Autowired
-    private AuthenticationManager authenticationManager;
 
     @InitBinder
     public void initBinder(WebDataBinder binder) {
@@ -108,6 +100,41 @@ public class UserController {
         }
     }
 
+    @GetMapping("/signin/oauth2/code/google")
+    public String getGoogleSignin(
+                                  @RequestParam(name = "code", required = false) String code,
+                                  @RequestParam(name = "error", required = false) String error,
+                                  @RequestParam(name = "state", required = false) String state,
+                                  Model model,
+                                  HttpServletResponse response
+    ) throws Exception {
+        /**
+         * 1. 구글 인증 코드를 받는다.
+         * 2. 구글 인증 코드를 통해 google Access Token을 받아온다.
+         * 3. Access Token을 사용하여 사용자의 정보를 받아온다.
+         * 4. 사용자의 정보를 member 테이블에서 찾는다.
+         * 5. 사용자의 정보가 member 테이블에 존재하지 않는다면, 신규 가입 페이지로 이동한다.
+         * 6. 사용자의 정보가 member 테이블에 존재한다면, 서버 Access Token을 쿠키에 담은 후 홈으로 이동시킨다.
+         */
+        String accessToken = userService.getGoogleAccessToken(code);
+        GoogleAccountProfileResponse accountProfile = userService.getGoogleUserInfo(accessToken);
+
+        if(accessToken != null || accountProfile.isVerified_email()) {
+            Cookie cookie = new Cookie("accessToken", accessToken);
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true);
+            cookie.setPath("/");
+            cookie.setMaxAge(600);
+
+            response.addCookie(cookie);
+            return "closecurrentpage";
+        } else {
+            String msg = "로그인에_실패했습니다.";
+            model.addAttribute("msg", msg);
+            return "redirect:/signin";
+        }
+    }
+
     @GetMapping("/signup")
     public String signup() {
         return "signup";
@@ -115,7 +142,7 @@ public class UserController {
 
     @PutMapping("/signup")
     public String signup(Member member,
-                                         HttpServletResponse response
+                         HttpServletResponse response
     ) throws Exception {
         return "/";
     }

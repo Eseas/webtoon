@@ -18,34 +18,34 @@ public class Member {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "login_id", unique = true, nullable = false, length = 50)
+    @Column(name = "login_id", unique = true, length = 50)
     private String loginId;
 
-    @Column(name = "pwd", nullable = false, length = 50)
+    @Column(name = "pwd", length = 50)
     private String pwd;
 
-    @Column(name = "first_name", nullable = false, length = 10)
+    @Column(name = "first_name", length = 10)
     private String first_name;
 
-    @Column(name = "last_name", nullable = false, length = 20)
+    @Column(name = "last_name", length = 20)
     private String last_name;
 
-    @Column(name = "email", nullable = false, length = 50)
+    @Column(name = "email", length = 50)
     private String email;
 
-    @Column(name = "reg_no", nullable = false, length = 30)
+    @Column(name = "reg_no", length = 30)
     private String reg_no;
 
-    @Column(name = "age", nullable = false)
+    @Column(name = "age")
     private Short age;
 
-    @Column(name = "phone_num", nullable = false, length = 20)
+    @Column(name = "phone_num", length = 20)
     private String phone_num;
 
-    @Column(name = "wrong_pwd_cnt", nullable = false)
+    @Column(name = "wrong_pwd_cnt")
     private Short wrong_pwd_cnt = 0;  // 기본값 설정
 
-    @Column(name = "using_state", nullable = false, length = 5)
+    @Column(name = "using_state", length = 5)
     private String using_state;
 
     @Temporal(TemporalType.TIMESTAMP)
