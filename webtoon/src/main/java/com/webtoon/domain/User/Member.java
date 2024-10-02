@@ -11,11 +11,11 @@ import java.util.Date;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "member")
+@Table(name = "member", schema = "webtoon")
 public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "\"Id\"")  // 테이블에서 "Id"로 정의된 컬럼명을 명시적으로 설정
+    @Column(name = "id")
     private Long id;
 
     @Column(name = "login_id", unique = true, nullable = false, length = 50)
@@ -83,5 +83,13 @@ public class Member {
         this.updated_dt = updated_dt;
         this.updated_id = updated_id;
         this.social_token = social_token;
+    }
+
+    public void increaseFailureCount() {
+        this.wrong_pwd_cnt++;
+    }
+
+    public void resetFailureCount() {
+        this.wrong_pwd_cnt = 0;
     }
 }

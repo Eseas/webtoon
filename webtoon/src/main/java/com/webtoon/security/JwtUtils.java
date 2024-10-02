@@ -1,4 +1,4 @@
-package com.webtoon.utils.JWT;
+package com.webtoon.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.*;
@@ -34,20 +34,20 @@ public class JwtUtils {
         return new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
     }
 
-    public String generateAccessToken(String id, String pwd) throws Exception {
-        return generateJWT(id, pwd, accessTokenValiditySeconds);
+    public String generateAccessToken(String id, String role) throws Exception {
+        return generateJWT(id, role, accessTokenValiditySeconds);
     }
 
-    public String generateRefreshToken(String id, String pwd) throws Exception {
-        return generateJWT(id, pwd, refreshTokenValiditySeconds);
+    public String generateRefreshToken(String id, String role) throws Exception {
+        return generateJWT(id, role, refreshTokenValiditySeconds);
     }
 
-    private String generateJWT(String id, String pwd, long TokenValiditySeconds) throws JOSEException {
+    private String generateJWT(String id, String role, long TokenValiditySeconds) throws JOSEException {
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .subject(id)
                 .issueTime(new Date())
                 .claim("id", id)
-                .claim("pwd", pwd)
+                .claim("role", role)
                 .expirationTime(new Date(System.currentTimeMillis() + TokenValiditySeconds)) // 10분 유효
                 .build();
 
@@ -64,7 +64,7 @@ public class JwtUtils {
     }
 
     // JWT 복호화 메서드
-    public String decryptJWT(String encryptedJWT) throws Exception {
+    private String decryptJWT(String encryptedJWT) throws Exception {
         // AES-256 SecretKey 불러오기
         SecretKey secretKey = getAESKey();
 
@@ -81,5 +81,24 @@ public class JwtUtils {
         // ObjectMapper를 사용해 Map을 JSON 문자열로 변환
         ObjectMapper mapper = new ObjectMapper();
         return mapper.writeValueAsString(claims);
+    }
+
+    public boolean validateJWT(String encryptedJWT) throws Exception {
+        // 1. JWT 복호화
+        String decryptedJWT = decryptJWT(encryptedJWT);
+
+        // 2. 복호화된 JWT의 클레임 추출
+        EncryptedJWT jwt = EncryptedJWT.parse(encryptedJWT);
+        Date expirationTime = jwt.getJWTClaimsSet().getExpirationTime();
+
+        // 3. 토큰의 유효기간 검증
+        if (expirationTime.before(new Date())) {
+            log.warn("Token has expired");
+            return false;  // 토큰이 만료되었으면 false 반환
+        }
+
+        // 4. 추가 검증이 필요한 경우 여기서 처리 (예: 서명 검증, issuer 검증 등)
+
+        return true;  // 유효한 경우 true 반환
     }
 }
