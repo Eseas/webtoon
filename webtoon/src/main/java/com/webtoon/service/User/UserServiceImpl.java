@@ -4,15 +4,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.webtoon.domain.User.Member;
-import com.webtoon.dto.GoogleAccountProfileResponse;
-import com.webtoon.dto.LoginDto;
+import com.webtoon.dto.*;
 import com.webtoon.repository.jpa.MemberRepository;
 import com.webtoon.security.JwtUtils;
 import com.webtoon.utils.RedisUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.security.access.AuthorizationServiceException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,17 +25,17 @@ import java.net.http.HttpResponse;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor(onConstructor_ = {@Autowired})
 @Slf4j
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    private JwtUtils jwtUtils;
+    private final JwtUtils jwtUtils;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final MemberRepository memberRepository;
 
-    @Autowired
-    private MemberRepository memberRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    private final RedisUtils redisUtils;
 
     @Value("${google.client_id}")
     private String googleClientId;
@@ -42,8 +43,13 @@ public class UserServiceImpl implements UserService {
     private String googleSecretPassword;
     @Value("${google.redirect_uri}")
     private String googleRedirectUri;
-    @Autowired
-    private RedisUtils redisUtils;
+
+    @Value("${naver.client_id}")
+    private String naverClientId;
+    @Value("${naver.secret_password}")
+    private String naverClientPwd;
+    @Value("${naver.redirect_uri}")
+    private String naverRedirectUrl;
 
     @Override
     @Transactional
@@ -66,26 +72,45 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String getGoogleAccessToken(String code) throws Exception {
-        log.info("start : getGoogleAccessToken");
+    public String getAccessToken(
+            String author_code,
+            String socialCode
+    ) throws Exception {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("client_id", googleClientId);
-        body.add("client_secret", googleSecretPassword);
-        body.add("code", code);
-        body.add("grant_type", "authorization_code");
-        body.add("redirect_uri", googleRedirectUri);
+        String url;
+
+        switch(socialCode) {
+            case "naver":
+                body.add("grant_type", "authorization_code");
+                body.add("client_id", naverClientId);
+                body.add("client_secret", naverClientPwd);
+                body.add("code", author_code);
+                body.add("state", "test");
+                url = "https://nid.naver.com/oauth2.0/token";
+                break;
+            case "google":
+                body.add("client_id", googleClientId);
+                body.add("client_secret", googleSecretPassword);
+                body.add("code", author_code);
+                body.add("grant_type", "authorization_code");
+                body.add("redirect_uri", googleRedirectUri);
+                url = "https://oauth2.googleapis.com/token";
+                break;
+            case "kakao":
+                url = "https://kauth.kakao.com/oauth/token";
+                break;
+            default:
+                return "";
+        }
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
         ResponseEntity<String> response = restTemplate.postForEntity(
-                "https://oauth2.googleapis.com/token", request, String.class);
-        if(response.getStatusCode().is2xxSuccessful()) {
-            log.info("get accessCode is return 200");
-        }
+                url, request, String.class);
         String responseBody = response.getBody();
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -97,8 +122,6 @@ public class UserServiceImpl implements UserService {
             String accessToken = jsonNode.get("access_token").asText();
 //            String refreshToken = jsonNode.get("refresh_token").asText();
             // redisUtils.setDataTo0(accessToken, refreshToken);
-            log.info("get accessToken : {}", accessToken);
-            log.info("end : getGoogleAccessToken");
             return accessToken;
         } catch (JsonProcessingException e) {
             log.warn("Login Process Failed : {}", e.getMessage());
@@ -129,6 +152,7 @@ public class UserServiceImpl implements UserService {
 
         if (response.getStatusCode() == HttpStatus.OK) {
             String body = response.getBody();
+            log.info("body : {}", body);
             ObjectMapper objectMapper = new ObjectMapper();
 
             try {
@@ -155,29 +179,90 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
-    // 작성 필요.
     @Override
-    public boolean checkMemberInDB(String email) throws Exception {
-        return false;
-    }
+    public LoginAPIProfileResponse getSocialUserInfo(
+            String accessToken,
+            String socialCode
+    ) throws Exception {
+        if(accessToken == null || accessToken.isEmpty()) {
+            log.warn("accessToken is null or empty");
+            return null;
+        }
 
-    public Optional<Member> getMemberById(String id) {
-        return memberRepository.findByLoginId(id);
-    }
+        String url;
 
-    public void loginHandler(String id) {
-        Optional<Member> member = memberRepository.findByLoginId(id);
+        switch(socialCode) {
+            case "google":
+                url = "https://www.googleapis.com/oauth2/v3/userinfo";
+                break;
+            case "naver":
+                url = "https://openapi.naver.com/v1/nid/me";
+                break;
+            case "kakao":
+                url = "https://kapi.kakao.com/v2/user/me";
+                break;
+            default:
+                return null;
+        }
 
-        if(member.isPresent()) {
-            try {
-                member.get().resetFailureCount();
-                memberRepository.save(member.get());
-            } catch (Exception e) {
-            }
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer " + accessToken);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                String.class
+        );
+
+        if(!(response.getStatusCode() == HttpStatus.OK)) {
+            log.warn("Processing Social Login Failed");
+            return null;
+        }
+
+        String body = response.getBody();
+        log.info("body : {}", body);
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(body);
+        LoginAPIProfileResponse userInfo;
+        switch(socialCode) {
+            case "google":
+                return userInfo = new GoogleLoginAPIProfileResponse(jsonNode);
+            case "naver":
+                return userInfo = new NaverLoginAPIProfileResponse(jsonNode);
+            case "kakao":
+                return new KakaoLoginAPIProfileResponse(jsonNode);
+            default:
+                return null;
         }
     }
 
-    private void loginSuccessHandler(Member member) {
+    @Override
+    public Optional<Member> getMemberInDB(String loginId
+    ) throws Exception {
+        return memberRepository.findByLoginIdAndUsingState(loginId, "US001");
+    }
+
+    @Override
+    public Optional<Member> getGoogleMemberInDB(String loginId) throws Exception {
+        return memberRepository.findByGoogleLoginIdAndUsingState(loginId, "US001", "AC002")
+                .or(() -> Optional.empty());
+    }
+
+    @Override
+    @Transactional
+    public Member saveMemberInDB(Member member, String socialCode) throws Exception {
+        Member existMember = memberRepository
+                .findByLoginIdAndUsingState(member.getLoginId(), "US001")
+                .orElseGet(() -> Member.builder().build());
+        return member;
+    }
+
+    private void loginSuccessHandler(Member member
+    ) {
         try {
             member.resetFailureCount();
             memberRepository.save(member);

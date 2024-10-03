@@ -54,3 +54,26 @@ document.getElementById('google-login-btn').addEventListener('click', async func
         console.error('Error fetching Google config:', error);
     }
 });
+
+document.getElementById('naver-login-btn').addEventListener('click', async function() {
+    try {
+        // 서버에서 Google OAuth 설정을 받아옴
+        const response = await fetch('/api/naver-config');
+        const config = await response.json();
+
+        const naverClientId = config.clientId;
+        const naverRedirectUrl = config.redirectUrl;
+
+        // 구글 OAuth 인증 URL 생성
+        const url = 'https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=' +
+            naverClientId +
+            '&redirect_uri=' +
+            naverRedirectUrl +
+            '&state=1234';
+        console.log(url);
+        // 팝업 창 열기
+        window.open(url, '_blank', 'width=500,height=600');
+    } catch (error) {
+        console.error('Error fetching Naver config:', error);
+    }
+});

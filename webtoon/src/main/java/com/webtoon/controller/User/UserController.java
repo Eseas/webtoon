@@ -4,6 +4,7 @@ import com.webtoon.dto.GoogleAccountProfileResponse;
 import com.webtoon.dto.LoginDto;
 import com.webtoon.domain.User.Member;
 import com.webtoon.dto.LoginFormDto;
+import com.webtoon.dto.NaverLoginAPIProfileResponse;
 import com.webtoon.security.CustomUserDetails;
 import com.webtoon.service.User.UserService;
 import com.webtoon.security.JwtUtils;
@@ -20,6 +21,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @Controller
 @Slf4j
@@ -116,11 +119,17 @@ public class UserController {
          * 5. 사용자의 정보가 member 테이블에 존재하지 않는다면, 신규 가입 페이지로 이동한다.
          * 6. 사용자의 정보가 member 테이블에 존재한다면, 서버 Access Token을 쿠키에 담은 후 홈으로 이동시킨다.
          */
-        String accessToken = userService.getGoogleAccessToken(code);
+        String accessToken = userService.getAccessToken(code, "google");
         GoogleAccountProfileResponse accountProfile = userService.getGoogleUserInfo(accessToken);
 
         if(accessToken != null || accountProfile.isVerified_email()) {
-            Cookie cookie = new Cookie("accessToken", accessToken);
+            Optional<Member> member = userService.getGoogleMemberInDB(accountProfile.getId());
+
+            String encryptAccessToken = jwtUtils.generateAccessToken(accountProfile.getId(), "USER");
+            String encryptRefreshToken = jwtUtils.generateRefreshToken(accountProfile.getId(), "USER");
+            // redisUtils.setDataTo0(encryptAccessToken, encryptRefreshToken);
+
+            Cookie cookie = new Cookie("accessToken", encryptAccessToken);
             cookie.setHttpOnly(true);
             cookie.setSecure(true);
             cookie.setPath("/");
@@ -133,6 +142,39 @@ public class UserController {
             model.addAttribute("msg", msg);
             return "redirect:/signin";
         }
+    }
+
+    @GetMapping("/signin/oauth2/code/naver")
+    public String getNaverSignin(
+            @RequestParam(value = "code", required = false) String code,
+            @RequestParam(value = "error", required = false) String error,
+            @RequestParam(value = "error_description", required = false) String error_description,
+            Model model,
+            HttpServletResponse response
+    ) throws Exception{
+        if(!(error == null || error.isEmpty())) {
+            log.warn("error : processing login naver = {}",error);
+            log.warn("error_description : processing login naver = {}",error_description);
+            model.addAttribute("msg", error_description);
+            return "closecurrentpage";
+        }
+
+        String accessToken = userService.getAccessToken(code, "naver");
+        NaverLoginAPIProfileResponse userInfo = (NaverLoginAPIProfileResponse) userService.getSocialUserInfo(accessToken, "naver");
+
+        log.info("Naver Social Login User Info : {}", userInfo);
+
+        String encryptAccessToken = jwtUtils.generateAccessToken("test_user", "USER");
+        String encryptRefreshToken = jwtUtils.generateRefreshToken("test_user", "USER");
+        // redisUtils.setDataTo0(encryptAccessToken, encryptRefreshToken);
+
+        Cookie cookie = new Cookie("accessToken", encryptAccessToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(600);
+        response.addCookie(cookie);
+        return "closecurrentpage";
     }
 
     @GetMapping("/signup")
