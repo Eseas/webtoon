@@ -23,6 +23,11 @@ public class LoginAPIConfigController {
     @Value("${naver.redirect_uri}")
     private String naverRedirectUrl;
 
+    @Value("${kakao.rest_api_key}")
+    private String kakaoRestApiKey;
+    @Value("${kakao.redirect_uri}")
+    private String kakaoRedirectUrl;
+
     @GetMapping("/api/google-config")
     public Map<String, String> getGoogleConfig() {
         Map<String, String> config = new HashMap<>();
@@ -36,6 +41,14 @@ public class LoginAPIConfigController {
         Map<String, String> config = new HashMap<>();
         config.put("clientId", naverClientId);
         config.put("redirectUrl", naverRedirectUrl);
+        return config;
+    }
+
+    @GetMapping("api/kakao-config")
+    public Map<String, String> getKakaoConfig() {
+        Map<String, String> config = new HashMap<>();
+        config.put("clientId", kakaoRestApiKey);
+        config.put("redirectUrl", kakaoRedirectUrl);
         return config;
     }
 }

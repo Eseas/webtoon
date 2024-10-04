@@ -20,7 +20,7 @@ class JwtUtilsTest {
 
     @Test
     void generateAccessToken() throws Exception {
-        String accessToken = jwtUtils.generateAccessToken("asdf", "USER");
+        String accessToken = jwtUtils.generateAccessToken("asdf", "USER", "AC001");
 
         log.info("access token: {}", accessToken);
     }

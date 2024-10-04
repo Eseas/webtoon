@@ -1,4 +1,4 @@
-package com.webtoon.dto;
+package com.webtoon.dto.Login.SocialLogin;
 
 import lombok.Builder;
 import lombok.Getter;

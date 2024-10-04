@@ -1,4 +1,4 @@
-package com.webtoon.dto;
+package com.webtoon.dto.Login;
 
 import lombok.*;
 

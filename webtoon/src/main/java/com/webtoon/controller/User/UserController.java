@@ -1,11 +1,8 @@
 package com.webtoon.controller.User;
 
-import com.webtoon.dto.GoogleAccountProfileResponse;
-import com.webtoon.dto.LoginDto;
 import com.webtoon.domain.User.Member;
-import com.webtoon.dto.LoginFormDto;
-import com.webtoon.dto.NaverLoginAPIProfileResponse;
-import com.webtoon.security.CustomUserDetails;
+import com.webtoon.dto.Login.LoginDto;
+import com.webtoon.dto.Login.LoginFormDto;
 import com.webtoon.service.User.UserService;
 import com.webtoon.security.JwtUtils;
 import com.webtoon.utils.RedisUtils;
@@ -13,6 +10,7 @@ import com.webtoon.validator.LoginValidator;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -25,17 +23,17 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @Controller
+@RequiredArgsConstructor(onConstructor_ = {@Autowired})
 @Slf4j
 public class UserController {
 
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private JwtUtils jwtUtils;
-    @Autowired
-    private RedisUtils redisUtils;
-    @Autowired
-    private LoginValidator loginValidator;
+    private final UserService userService;
+
+    private final JwtUtils jwtUtils;
+
+    private final RedisUtils redisUtils;
+
+    private final LoginValidator loginValidator;
 
     @InitBinder
     public void initBinder(WebDataBinder binder) {
@@ -43,7 +41,25 @@ public class UserController {
     }
 
     @GetMapping("/signin")
-    public String getLogin(Model model) {
+    public String getLogin(Model model,
+                           HttpServletRequest request,
+                           HttpServletResponse response
+    ) throws Exception {
+        Cookie[] cookies = request.getCookies();
+
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                // Access Token 쿠키가 존재하는지 확인
+                if ("accessToken".equals(cookie.getName()) && jwtUtils.validateJWT(cookie.getValue())) {
+                    // 유요한 AccessToken이 있으면 홈으로 리다이렉트
+                    response.sendRedirect("/");
+                }
+            }
+        }
+        Cookie cookie = new Cookie("accessToken", "");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+
         model.addAttribute("loginFormDto", new LoginFormDto());
         return "signin";
     }
@@ -83,11 +99,13 @@ public class UserController {
             if(!userService.loginCheck(loginDto)) {
                 String msg = "Id 또는 Pwd를 다시 확인해주세요.";
                 model.addAttribute("msg", msg);
-                return "signin";
+                return "forward:/signin";
             }
 
-            String encryptAccessToken = jwtUtils.generateAccessToken(loginDto.getId(), loginDto.getPwd());
-            String encryptRefreshToken = jwtUtils.generateRefreshToken(loginDto.getId(), loginDto.getPwd());
+            Optional<Member> member = userService.getMemberInDB(loginDto.getId());
+
+            String encryptAccessToken = jwtUtils.generateAccessToken(loginDto.getId(), member.get().getRole(), member.get().getSocial_code());
+            String encryptRefreshToken = jwtUtils.generateRefreshToken(loginDto.getId(), member.get().getRole(), member.get().getSocial_code());
             // redisUtils.setDataTo0(encryptAccessToken, encryptRefreshToken);
 
             Cookie cookie = new Cookie("accessToken", encryptAccessToken);
@@ -101,80 +119,6 @@ public class UserController {
             model.addAttribute("msg", "로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
             return "signin";
         }
-    }
-
-    @GetMapping("/signin/oauth2/code/google")
-    public String getGoogleSignin(
-                                  @RequestParam(name = "code", required = false) String code,
-                                  @RequestParam(name = "error", required = false) String error,
-                                  @RequestParam(name = "state", required = false) String state,
-                                  Model model,
-                                  HttpServletResponse response
-    ) throws Exception {
-        /**
-         * 1. 구글 인증 코드를 받는다.
-         * 2. 구글 인증 코드를 통해 google Access Token을 받아온다.
-         * 3. Access Token을 사용하여 사용자의 정보를 받아온다.
-         * 4. 사용자의 정보를 member 테이블에서 찾는다.
-         * 5. 사용자의 정보가 member 테이블에 존재하지 않는다면, 신규 가입 페이지로 이동한다.
-         * 6. 사용자의 정보가 member 테이블에 존재한다면, 서버 Access Token을 쿠키에 담은 후 홈으로 이동시킨다.
-         */
-        String accessToken = userService.getAccessToken(code, "google");
-        GoogleAccountProfileResponse accountProfile = userService.getGoogleUserInfo(accessToken);
-
-        if(accessToken != null || accountProfile.isVerified_email()) {
-            Optional<Member> member = userService.getGoogleMemberInDB(accountProfile.getId());
-
-            String encryptAccessToken = jwtUtils.generateAccessToken(accountProfile.getId(), "USER");
-            String encryptRefreshToken = jwtUtils.generateRefreshToken(accountProfile.getId(), "USER");
-            // redisUtils.setDataTo0(encryptAccessToken, encryptRefreshToken);
-
-            Cookie cookie = new Cookie("accessToken", encryptAccessToken);
-            cookie.setHttpOnly(true);
-            cookie.setSecure(true);
-            cookie.setPath("/");
-            cookie.setMaxAge(600);
-
-            response.addCookie(cookie);
-            return "closecurrentpage";
-        } else {
-            String msg = "로그인에_실패했습니다.";
-            model.addAttribute("msg", msg);
-            return "redirect:/signin";
-        }
-    }
-
-    @GetMapping("/signin/oauth2/code/naver")
-    public String getNaverSignin(
-            @RequestParam(value = "code", required = false) String code,
-            @RequestParam(value = "error", required = false) String error,
-            @RequestParam(value = "error_description", required = false) String error_description,
-            Model model,
-            HttpServletResponse response
-    ) throws Exception{
-        if(!(error == null || error.isEmpty())) {
-            log.warn("error : processing login naver = {}",error);
-            log.warn("error_description : processing login naver = {}",error_description);
-            model.addAttribute("msg", error_description);
-            return "closecurrentpage";
-        }
-
-        String accessToken = userService.getAccessToken(code, "naver");
-        NaverLoginAPIProfileResponse userInfo = (NaverLoginAPIProfileResponse) userService.getSocialUserInfo(accessToken, "naver");
-
-        log.info("Naver Social Login User Info : {}", userInfo);
-
-        String encryptAccessToken = jwtUtils.generateAccessToken("test_user", "USER");
-        String encryptRefreshToken = jwtUtils.generateRefreshToken("test_user", "USER");
-        // redisUtils.setDataTo0(encryptAccessToken, encryptRefreshToken);
-
-        Cookie cookie = new Cookie("accessToken", encryptAccessToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(600);
-        response.addCookie(cookie);
-        return "closecurrentpage";
     }
 
     @GetMapping("/signup")

@@ -1,4 +1,4 @@
-package com.webtoon.dto;
+package com.webtoon.dto.Login.SocialLogin;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

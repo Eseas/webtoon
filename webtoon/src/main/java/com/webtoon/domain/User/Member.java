@@ -65,8 +65,11 @@ public class Member {
     @Column(name = "social_code", length = 5)
     private String social_code;
 
+    @Column(name = "role", length = 5)
+    private String role;
+
     @Builder
-    public Member(Long id, String loginId, String pwd, String first_name, String last_name, String email, String reg_no, Short age, String phone_num, Short wrong_pwd_cnt, String using_state, Date created_dt, String created_id, Date updated_dt, String updated_id, String social_code) {
+    public Member(Long id, String loginId, String pwd, String first_name, String last_name, String email, String reg_no, Short age, String phone_num, Short wrong_pwd_cnt, String using_state, Date created_dt, String created_id, Date updated_dt, String updated_id, String social_code, String role) {
         this.id = id;
         this.loginId = loginId;
         this.pwd = pwd;
@@ -83,6 +86,7 @@ public class Member {
         this.updated_dt = updated_dt;
         this.updated_id = updated_id;
         this.social_code = social_code;
+        this.role = role;
     }
 
     public void increaseFailureCount() {

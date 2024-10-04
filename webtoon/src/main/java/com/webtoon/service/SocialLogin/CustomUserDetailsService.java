@@ -1,4 +1,4 @@
-package com.webtoon.service.User;
+package com.webtoon.service.SocialLogin;
 
 import com.webtoon.repository.jpa.MemberRepository;
 import org.springframework.beans.factory.annotation.Autowired;

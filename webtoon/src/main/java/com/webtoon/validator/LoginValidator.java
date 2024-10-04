@@ -1,7 +1,6 @@
 package com.webtoon.validator;
 
-import com.webtoon.dto.LoginDto;
-import com.webtoon.dto.LoginFormDto;
+import com.webtoon.dto.Login.LoginFormDto;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
