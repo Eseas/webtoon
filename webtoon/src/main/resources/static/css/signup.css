@@ -1,0 +1,83 @@
+/* 전체 배경 설정 및 컨테이너 중앙 정렬 */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+/* 회원가입 컨테이너 스타일 */
+.signup-container {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 350px; /* 컨테이너 너비 조정 */
+    text-align: center;
+}
+
+/* 폼 요소 스타일 */
+.signup-container h2 {
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+input[type="text"],
+input[type="password"] {
+    flex-grow: 1; /* 입력 필드가 컨테이너 너비에 맞춰 자동으로 조정 */
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+    border-color: #0056b3;
+}
+
+button {
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* 중복 확인 버튼 특정 위치 설정 */
+#checkIdButton {
+    padding: 12px 20px;
+    background-color: #28a745;
+    color: white;
+    margin-left: 8px; /* 중복확인 버튼과 아이디 입력 필드 사이 간격 */
+    white-space: nowrap; /* 버튼 텍스트 줄바꿈 방지 */
+}
+
+#idCheckMessage {
+    padding: 0px 0px 20px;
+}
+
+#checkIdButton:hover {
+    background-color: #218838;
+}
+
+button[type="submit"] {
+    width: 100%;
+    background-color: #007bff;
+    color: white;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+}

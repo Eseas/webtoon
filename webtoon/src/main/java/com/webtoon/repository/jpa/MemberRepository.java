@@ -19,7 +19,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
                                                 );
 
     @Query("SELECT m FROM Member m WHERE m.loginId = :loginId AND m.using_state = :usingState AND m.social_code = :socialCode")
-    Optional<Member> findByGoogleLoginIdAndUsingState(@Param("loginId") String loginId,
+    Optional<Member> findBySocialLoginIdAndUsingState(@Param("loginId") String loginId,
                                                       @Param("usingState") String usingState,
                                                       @Param("socialCode") String socialCode
                                                       );

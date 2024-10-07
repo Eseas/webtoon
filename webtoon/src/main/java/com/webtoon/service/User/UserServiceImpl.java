@@ -70,7 +70,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<Member> getGoogleMemberInDB(String loginId) throws Exception {
-        return memberRepository.findByGoogleLoginIdAndUsingState(loginId, "US001", "AC002")
+        return memberRepository.findBySocialLoginIdAndUsingState(loginId, "US001", "AC002")
                 .or(() -> Optional.empty());
     }
 

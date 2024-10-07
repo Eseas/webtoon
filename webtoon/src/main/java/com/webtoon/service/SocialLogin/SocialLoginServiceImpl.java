@@ -13,10 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Service
@@ -40,6 +42,11 @@ public class SocialLoginServiceImpl implements SocialLoginService {
     @Value("${naver.redirect_uri}")
     private String naverRedirectUrl;
 
+    @Value("${kakao.rest_api_key}")
+    private String kakaoClientId;
+    @Value("${kakao.redirect_uri}")
+    private String kakaoRedirectUri;
+
     @Override
     public String getAccessToken(
             String author_code,
@@ -53,15 +60,7 @@ public class SocialLoginServiceImpl implements SocialLoginService {
         String url;
 
         switch(socialCode) {
-            case "naver":
-                body.add("grant_type", "authorization_code");
-                body.add("client_id", naverClientId);
-                body.add("client_secret", naverClientPwd);
-                body.add("code", author_code);
-                body.add("state", "test");
-                url = "https://nid.naver.com/oauth2.0/token";
-                break;
-            case "google":
+            case "SC002":
                 body.add("client_id", googleClientId);
                 body.add("client_secret", googleSecretPassword);
                 body.add("code", author_code);
@@ -69,7 +68,19 @@ public class SocialLoginServiceImpl implements SocialLoginService {
                 body.add("redirect_uri", googleRedirectUri);
                 url = "https://oauth2.googleapis.com/token";
                 break;
-            case "kakao":
+            case "SC003":
+                body.add("grant_type", "authorization_code");
+                body.add("client_id", naverClientId);
+                body.add("client_secret", naverClientPwd);
+                body.add("code", author_code);
+                body.add("state", "test");
+                url = "https://nid.naver.com/oauth2.0/token";
+                break;
+            case "SC004":
+                body.add("grant_type", "authorization_code");
+                body.add("client_id", kakaoClientId);
+                body.add("code", author_code);
+                body.add("state", "test");
                 url = "https://kauth.kakao.com/oauth/token";
                 break;
             default:
@@ -88,63 +99,13 @@ public class SocialLoginServiceImpl implements SocialLoginService {
 
             // access_token과 refresh_token을 추출
             String accessToken = jsonNode.get("access_token").asText();
-//            String refreshToken = jsonNode.get("refresh_token").asText();
-            // redisUtils.setDataTo0(accessToken, refreshToken);
+            //String refreshToken = jsonNode.get("refresh_token").asText();
+            //redisUtils.setDataTo0(accessToken, refreshToken);
             return accessToken;
         } catch (JsonProcessingException e) {
             log.warn("Login Process Failed : {}", e.getMessage());
             return "";
         }
-    }
-
-    @Override
-    public GoogleAccountProfileResponse getGoogleUserInfo(String accessToken
-    ) throws Exception {
-        if(accessToken == null || accessToken.isEmpty()) {
-            log.warn("accessToken is null or empty");
-            return null;
-        }
-
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer " + accessToken);
-
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
-        ResponseEntity<String> response = restTemplate.exchange(
-                "https://www.googleapis.com/oauth2/v3/userinfo",
-                HttpMethod.GET,
-                entity,
-                String.class
-        );
-
-        if (response.getStatusCode() == HttpStatus.OK) {
-            String body = response.getBody();
-
-            ObjectMapper objectMapper = new ObjectMapper();
-
-            try {
-                JsonNode jsonNode = objectMapper.readTree(body);
-
-                String id = jsonNode.has("sub") ? jsonNode.get("sub").asText() : null;
-                String email = jsonNode.has("email") ? jsonNode.get("email").asText() : null;
-                boolean verifiedEmail = jsonNode.has("email_verified") && jsonNode.get("email_verified").asBoolean();
-                String givenName = jsonNode.has("name") ? jsonNode.get("name").asText() : null;
-                String familyName = jsonNode.has("given_name") ? jsonNode.get("given_name").asText() : null;
-
-                return GoogleAccountProfileResponse.builder()
-                        .id(id)
-                        .email(email)
-                        .verified_email(verifiedEmail)
-                        .given_name(givenName)
-                        .family_name(familyName)
-                        .build();
-            } catch (JsonProcessingException e) {
-                log.warn("Google User Data Get Process Failed : {}", e.getMessage());
-                return null;
-            }
-        }
-        return null;
     }
 
     @Override
@@ -160,13 +121,13 @@ public class SocialLoginServiceImpl implements SocialLoginService {
         String url;
 
         switch(socialCode) {
-            case "google":
+            case "SC002":   // google
                 url = "https://www.googleapis.com/oauth2/v3/userinfo";
                 break;
-            case "naver":
+            case "SC003":   // naver
                 url = "https://openapi.naver.com/v1/nid/me";
                 break;
-            case "kakao":
+            case "SC004":   // kakao
                 url = "https://kapi.kakao.com/v2/user/me";
                 break;
             default:
@@ -195,43 +156,93 @@ public class SocialLoginServiceImpl implements SocialLoginService {
         log.info("body : {}", body);
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readTree(body);
-        LoginAPIProfileResponse userInfo;
-        switch(socialCode) {
-            case "google":
-                return userInfo = new GoogleLoginAPIProfileResponse(jsonNode);
-            case "naver":
-                return userInfo = new NaverLoginAPIProfileResponse(jsonNode);
-            case "kakao":
-                return new KakaoLoginAPIProfileResponse(jsonNode);
-            default:
-                return null;
-        }
+        return switch (socialCode) {
+            case "SC002" ->   // google
+                    new GoogleLoginAPIProfileResponse(jsonNode);
+            case "SC003" ->   // naver
+                    new NaverLoginAPIProfileResponse(jsonNode);
+            case "SC004" ->   // kakao
+                    new KakaoLoginAPIProfileResponse(jsonNode);
+            default -> null;
+        };
     }
 
-    private String SaveSocialMemberInDB(
-        LoginAPIProfileResponse userInfo,
-        String socialCode
+    @Override
+    public Optional<Member> getSocialMemberInDB(String id, String socialCode) throws Exception {
+        return Optional.empty();
+    }
+
+    @Override
+    @Transactional
+    public boolean memberInsertInDB(LoginAPIProfileResponse userInfo,
+                                    String SocialCode
     ) throws Exception {
-        if(userInfo == null || socialCode == null) {
-            log.warn("Save UserInfo or Social Code Failed : Null");
-            return "";
-        }
-        if(!IsSocialMemberInDB(userInfo.getLoginId())) {
-            log.warn("Save UserInfo Failed : Exists User = {}", userInfo.getLoginId());
-            return "";
+        if(userInfo == null || SocialCode == null || IsSocialMemberInDB(userInfo.getLoginId(), SocialCode)) {
+            log.info("existed user");
+            return false;
         }
 
-        return null;
+        switch(SocialCode) {
+            case "SC002":   // google
+                GoogleLoginAPIProfileResponse googleUserInfo = (GoogleLoginAPIProfileResponse)userInfo;
+                Member googleMember = Member.builder()
+                        .loginId(googleUserInfo.getLoginId())
+                        .name(googleUserInfo.getName())
+                        .role("USER")
+                        .social_code("SC002")
+                        .using_state("US001")
+                        .created_id("admin")
+                        .updated_id("admin")
+                        .build();
+                memberRepository.save(googleMember);
+                break;
+            case "SC003":   // naver
+                NaverLoginAPIProfileResponse naverUserInfo = (NaverLoginAPIProfileResponse) userInfo;
+                int age = calculateAge(naverUserInfo.getBirthYear());
+                Member naverMember = Member.builder()
+                        .loginId(naverUserInfo.getLoginId())
+                        .name(naverUserInfo.getName())
+                        .birth(naverUserInfo.getBirthYear())
+                        .age(age)
+                        .using_state("US001")
+                        .role("USER")
+                        .social_code("SC003")
+                        .created_id("admin")
+                        .updated_id("admin")
+                        .build();
+                memberRepository.save(naverMember);
+                break;
+            case "SC004":   // kakao
+                KakaoLoginAPIProfileResponse kakaoUserInfo = (KakaoLoginAPIProfileResponse) userInfo;
+
+                break;
+        }
+        return false;
+    }
+
+    private static int calculateAge(String birthYearString) {
+        // String을 int로 변환
+        int birthYear = Integer.parseInt(birthYearString);
+
+        // 현재 년도 구하기
+        int currentYear = LocalDate.now().getYear();
+
+        // 나이 계산
+        int age = currentYear - birthYear;
+
+        return age;
     }
 
     private boolean IsSocialMemberInDB(
-            String loginID
+            String loginId,
+            String socialCode
     ) throws Exception {
-        Optional<Member> member = memberRepository.findByLoginIdAndUsingState(loginID, "US001");
+        Optional<Member> member = memberRepository.findBySocialLoginIdAndUsingState(loginId, "US001", socialCode);
 
         if(member.isPresent()) {
             return true;
         }
+        log.info("not found user");
         return false;
     }
 

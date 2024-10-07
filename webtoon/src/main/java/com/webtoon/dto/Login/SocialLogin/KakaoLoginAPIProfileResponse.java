@@ -23,9 +23,4 @@ public class KakaoLoginAPIProfileResponse implements LoginAPIProfileResponse {
     public String getName() {
         return "";
     }
-
-    @Override
-    public String getProfile_image() {
-        return "";
-    }
 }

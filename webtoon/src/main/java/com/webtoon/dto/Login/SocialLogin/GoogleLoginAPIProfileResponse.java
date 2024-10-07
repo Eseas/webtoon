@@ -23,9 +23,4 @@ public class GoogleLoginAPIProfileResponse implements LoginAPIProfileResponse {
     public String getName() {
         return jsonNode.get("name").asText();
     }
-
-    @Override
-    public String getProfile_image() {
-        return jsonNode.get("picture").asText();
-    }
 }

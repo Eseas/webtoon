@@ -24,11 +24,6 @@ public class NaverLoginAPIProfileResponse implements LoginAPIProfileResponse {
         return jsonNode.get("name").asText();
     }
 
-    @Override
-    public String getProfile_image() {
-        return jsonNode.get("profile_image").asText();
-    }
-
     public String getGender() {
         return jsonNode.get("gender").asText();
     }

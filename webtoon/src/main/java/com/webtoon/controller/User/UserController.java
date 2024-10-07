@@ -3,6 +3,8 @@ package com.webtoon.controller.User;
 import com.webtoon.domain.User.Member;
 import com.webtoon.dto.Login.LoginDto;
 import com.webtoon.dto.Login.LoginFormDto;
+import com.webtoon.dto.SignUp.SignUpDto;
+import com.webtoon.repository.jpa.MemberRepository;
 import com.webtoon.service.User.UserService;
 import com.webtoon.security.JwtUtils;
 import com.webtoon.utils.RedisUtils;
@@ -13,6 +15,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -26,7 +30,6 @@ import java.util.Optional;
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 @Slf4j
 public class UserController {
-
     private final UserService userService;
 
     private final JwtUtils jwtUtils;
@@ -124,12 +127,5 @@ public class UserController {
     @GetMapping("/signup")
     public String signup() {
         return "signup";
-    }
-
-    @PutMapping("/signup")
-    public String signup(Member member,
-                         HttpServletResponse response
-    ) throws Exception {
-        return "/";
     }
 }

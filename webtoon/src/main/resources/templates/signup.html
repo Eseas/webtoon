@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>회원가입</title>
+    <link rel="stylesheet" th:href="@{/css/signup.css}">
+</head>
+<body>
+<div class="signup-container">
+    <h2>회원가입</h2>
+    <form id="signupForm">
+        <div class="form-group">
+            <input type="text" id="id" name="id" placeholder="아이디" required>
+            <button type="button" id="checkIdButton" onclick="checkId()">중복 확인</button>
+        </div>
+        <span id="idCheckMessage"></span>
+        <div class="form-group">
+            <input type="password" id="pwd" name="pwd" placeholder="비밀번호" required>
+        </div>
+        <div class="form-group">
+            <input type="text" id="name" name="name" placeholder="이름" required>
+        </div>
+        <div class="form-group">
+            <input type="text" id="birth" name="birth" placeholder="생년월일(YYYYMMDD, -제외)" required>
+        </div>
+        <button type="submit">가입하기</button>
+    </form>
+</div>
+<script src="/js/signup.js"></script>
+</body>
+</html>

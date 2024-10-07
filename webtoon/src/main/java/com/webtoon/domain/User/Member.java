@@ -5,6 +5,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.util.Date;
 
@@ -24,39 +26,38 @@ public class Member {
     @Column(name = "pwd", length = 50)
     private String pwd;
 
-    @Column(name = "first_name", length = 10)
-    private String first_name;
-
-    @Column(name = "last_name", length = 20)
-    private String last_name;
+    @Column(name = "name", length = 20)
+    private String name;
 
     @Column(name = "email", length = 50)
     private String email;
 
-    @Column(name = "reg_no", length = 30)
-    private String reg_no;
+    @Column(name = "birth", length = 30)
+    private String birth;
 
     @Column(name = "age")
-    private Short age;
+    private Integer age;
 
     @Column(name = "phone_num", length = 20)
     private String phone_num;
 
     @Column(name = "wrong_pwd_cnt")
-    private Short wrong_pwd_cnt = 0;  // 기본값 설정
+    private Integer wrong_pwd_cnt = 0;  // 기본값 설정
 
     @Column(name = "using_state", length = 5)
     private String using_state;
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "created_dt", nullable = false)
+    @Column(name = "created_dt")
+    @CreationTimestamp
     private Date created_dt;
 
     @Column(name = "created_id", nullable = false)
     private String created_id;
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "updated_dt", nullable = false)
+    @Column(name = "updated_dt")
+    @UpdateTimestamp
     private Date updated_dt;
 
     @Column(name = "updated_id", nullable = false)
@@ -69,14 +70,13 @@ public class Member {
     private String role;
 
     @Builder
-    public Member(Long id, String loginId, String pwd, String first_name, String last_name, String email, String reg_no, Short age, String phone_num, Short wrong_pwd_cnt, String using_state, Date created_dt, String created_id, Date updated_dt, String updated_id, String social_code, String role) {
+    public Member(Long id, String loginId, String pwd, String name, String email, String birth, Integer age, String phone_num, Integer wrong_pwd_cnt, String using_state, Date created_dt, String created_id, Date updated_dt, String updated_id, String social_code, String role) {
         this.id = id;
         this.loginId = loginId;
         this.pwd = pwd;
-        this.first_name = first_name;
-        this.last_name = last_name;
+        this.name = name;
         this.email = email;
-        this.reg_no = reg_no;
+        this.birth = birth;
         this.age = age;
         this.phone_num = phone_num;
         this.wrong_pwd_cnt = wrong_pwd_cnt;

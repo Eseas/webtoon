@@ -1,9 +1,7 @@
 package com.webtoon.controller.User;
 
 import com.webtoon.domain.User.Member;
-import com.webtoon.dto.Login.SocialLogin.GoogleAccountProfileResponse;
-import com.webtoon.dto.Login.SocialLogin.NaverLoginAPIProfileResponse;
-import com.webtoon.dto.Login.SocialLogin.SocialLoginAuthResponse;
+import com.webtoon.dto.Login.SocialLogin.*;
 import com.webtoon.security.JwtUtils;
 import com.webtoon.service.SocialLogin.SocialLoginService;
 import com.webtoon.service.User.UserService;
@@ -15,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Optional;
@@ -55,12 +55,11 @@ public class SocialLoginController {
             return "closecurrentpage";
         }
 
-        String accessToken = socialLoginService.getAccessToken(code, "google");
-        GoogleAccountProfileResponse accountProfile = socialLoginService.getGoogleUserInfo(accessToken);
+        String accessToken = socialLoginService.getAccessToken(code, "SC002");
+        GoogleLoginAPIProfileResponse accountProfile = (GoogleLoginAPIProfileResponse) socialLoginService.getSocialUserInfo(accessToken, "SC002");
         log.info("accountProfile = {}", accountProfile);
-        if(accessToken != null || accountProfile.isVerified_email()) {
-
-            Optional<Member> member = userService.getGoogleMemberInDB(accountProfile.getId());
+        if(accessToken != null) {
+            socialLoginService.memberInsertInDB(accountProfile, "SC002");
 
             String encryptAccessToken = jwtUtils.generateAccessToken(accountProfile.getId(), "USER", "SC002");
             String encryptRefreshToken = jwtUtils.generateRefreshToken(accountProfile.getId(), "USER", "SC002");
@@ -83,25 +82,25 @@ public class SocialLoginController {
 
     @GetMapping("/signin/oauth2/code/kakao")
     public String getKakaoSignin(
-            @RequestParam SocialLoginAuthResponse socialLoginAuthResponse,
+            @ModelAttribute SocialLoginAuthResponse socialLoginAuthResponse,
             Model model,
             HttpServletResponse response
     ) throws Exception {
         if(!(socialLoginAuthResponse.getError() == null || socialLoginAuthResponse.getError().isEmpty())) {
-            log.warn("error : processing login naver = {}",socialLoginAuthResponse.getError());
-            log.warn("error_description : processing login naver = {}",socialLoginAuthResponse.getError_description());
+            log.warn("error : processing login kakao = {}",socialLoginAuthResponse.getError());
+            log.warn("error_description : processing login kakao = {}",socialLoginAuthResponse.getError_description());
             model.addAttribute("msg", socialLoginAuthResponse.getError_description());
             return "closecurrentpage";
         }
 
-        String accessToken = socialLoginService.getAccessToken(socialLoginAuthResponse.getCode(), "google");
-        GoogleAccountProfileResponse accountProfile = socialLoginService.getGoogleUserInfo(accessToken);
+        String accessToken = socialLoginService.getAccessToken(socialLoginAuthResponse.getCode(), "SC004");
+        KakaoLoginAPIProfileResponse accountProfile = (KakaoLoginAPIProfileResponse) socialLoginService.getSocialUserInfo(accessToken, "SC004");
 
-        if(accessToken != null || accountProfile.isVerified_email()) {
-            Optional<Member> member = userService.getGoogleMemberInDB(accountProfile.getId());
-
-            String encryptAccessToken = jwtUtils.generateAccessToken(accountProfile.getId(), "USER", "SC002");
-            String encryptRefreshToken = jwtUtils.generateRefreshToken(accountProfile.getId(), "USER", "SC002");
+        if(accessToken != null) {
+            socialLoginService.memberInsertInDB(accountProfile, "SC004");
+            String encryptAccessToken = jwtUtils.generateAccessToken(accountProfile.getId(), "USER", "SC004");
+            String encryptRefreshToken = jwtUtils.generateRefreshToken(accountProfile.getId(), "USER", "SC004");
+            log.info("encryptAccessToken : {}", encryptAccessToken);
             // redisUtils.setDataTo0(encryptAccessToken, encryptRefreshToken);
 
             Cookie cookie = new Cookie("accessToken", encryptAccessToken);
@@ -135,8 +134,8 @@ public class SocialLoginController {
             return "closecurrentpage";
         }
 
-        String accessToken = socialLoginService.getAccessToken(code, "naver");
-        NaverLoginAPIProfileResponse userInfo = (NaverLoginAPIProfileResponse) socialLoginService.getSocialUserInfo(accessToken, "naver");
+        String accessToken = socialLoginService.getAccessToken(code, "SC003");
+        NaverLoginAPIProfileResponse userInfo = (NaverLoginAPIProfileResponse) socialLoginService.getSocialUserInfo(accessToken, "SC003");
 
         log.info("Naver Social Login User Info : {}", userInfo);
 
