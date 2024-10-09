@@ -69,27 +69,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<Member> getGoogleMemberInDB(String loginId) throws Exception {
-        return memberRepository.findBySocialLoginIdAndUsingState(loginId, "US001", "AC002")
-                .or(() -> Optional.empty());
-    }
-
-    @Override
     @Transactional
-    public Member saveMemberInDB(Member member, String socialCode) throws Exception {
+    public Member findMemberInDB(Member member, String socialCode) throws Exception {
         Member existMember = memberRepository
                 .findByLoginIdAndUsingState(member.getLoginId(), "US001")
                 .orElseGet(() -> Member.builder().build());
         return member;
     }
 
-    private void loginSuccessHandler(Member member
-    ) {
-        try {
-            member.resetFailureCount();
-            memberRepository.save(member);
-        } catch (Exception e) {
-
-        }
+    @Override
+    public Long saveMember(Member member) throws Exception {
+        memberRepository.save(member);
+        return 0L;
     }
 }

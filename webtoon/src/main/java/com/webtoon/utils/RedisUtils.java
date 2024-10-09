@@ -3,6 +3,8 @@ package com.webtoon.utils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.TimeUnit;
+
 @Component
 public class RedisUtils {
     RedisTemplate<String, String> redisTemplate0;
@@ -13,7 +15,7 @@ public class RedisUtils {
     }
 
     public void setDataTo0(String key, String value) {
-        redisTemplate0.opsForValue().set(key, value);
+        redisTemplate0.opsForValue().set(key, value, 3600, TimeUnit.SECONDS);
     }
 
     public Object getDataTo1(String key) {
@@ -21,6 +23,6 @@ public class RedisUtils {
     }
 
     public void setDataTo1(String key, Object value) {
-        redisTemplate1.opsForValue().set(key, value);
+        redisTemplate1.opsForValue().set(key, value, 600, TimeUnit.SECONDS);
     }
 }

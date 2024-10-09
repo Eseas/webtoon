@@ -11,8 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +30,8 @@ public class UserRestController {
     private final UserService userService;
 
     private final SignupValidator signupValidator;
+
+    private final PasswordEncoder passwordEncoder;
 
     @InitBinder("idCheckDto")
     public void disableValidatorForThisMethod(WebDataBinder binder) {
@@ -57,7 +61,7 @@ public class UserRestController {
         }
     }
 
-    @PutMapping("/signup/insertDB")
+    @PutMapping("/signup/process")
     public ResponseEntity<Map<String, Boolean>> signup(
                         @RequestBody @Validated SignUpDto signUpDto,
                          BindingResult bindingResult,
@@ -67,8 +71,19 @@ public class UserRestController {
         Map<String, Boolean> map = new HashMap<>();
 
         if(bindingResult.hasErrors()) {
-
+            for(FieldError fieldError : bindingResult.getFieldErrors()) {
+                map.put(fieldError.getField(), false);
+            }
+            return new ResponseEntity<>(map, HttpStatus.BAD_REQUEST);
         }
-        return null;
+
+        userService.saveMember(Member.builder()
+                        .loginId(signUpDto.getId())
+                        .pwd(passwordEncoder.encode(signUpDto.getPwd()))
+                        .name(signUpDto.getName())
+                        .birth(signUpDto.getBirth())
+                        .build());
+
+        return ResponseEntity.ok(map);
     }
 }

@@ -4,6 +4,7 @@ import pandas as pd
 import csv
 import time
 from psycopg2 import extras
+import re
 
 # PostgreSQL connection settings
 conn = psycopg2.connect(
@@ -20,19 +21,32 @@ cur.execute("SET client_encoding TO 'UTF8';")
 
 # Function to parse author information and convert to JSON
 def parse_authors(author_string):
-    print(author_string)
-    authors = author_string.split('/') if '/' in author_string else [author_string]
+    #print(author_string)
+    authors = re.split(r'\s*/\s*(?![^()]*\))', author_string)
     author_dict = {}
     for author in authors:
-        if '(글)' in author:
-            for writer in author.replace('(글)', '').split(','):
-                author_dict[writer.strip()] = '글'
-        elif '(그림)' in author:
-            for illustrator in author.replace('(그림)', '').split(','):
-                author_dict[illustrator.strip()] = '그림'
-        elif '(원작)' in author:
-            for original in author.replace('(원작)', '').split(','):
-                author_dict[original.strip()] = '원작'
+        author = author.strip()
+        match = re.match(r'^(.*)\((.*?)\)$', author)
+        if match:
+            author_name = match.group(1).strip()
+            roles_str = match.group(2)
+            roles = set()
+            if '글/그림' in roles_str:
+                roles.update(['글', '그림'])
+            elif '글' in roles_str:
+                roles.add('글')
+            elif '그림' in roles_str:
+                roles.add('그림')
+            if '원작' in roles_str:
+                roles.add('원작')
+
+            if author_name in author_dict:
+                author_dict[author_name].update(roles)
+            else:
+                author_dict[author_name] = roles
+    
+    # Convert sets to lists for JSON serialization
+    author_dict = {key: list(value) for key, value in author_dict.items()}
     return json.dumps(author_dict, ensure_ascii=False)
 
 # Function to update or insert hashtags
@@ -60,7 +74,7 @@ def check_webtoon_exists(contentid):
 
 # Function to update or insert author data
 def update_or_insert_author(author_dict, webtoon_id):
-    for author_name, role in author_dict.items():
+    for author_name, roles in author_dict.items():
         cur.execute("SELECT id, webtoon_id FROM webtoon.author WHERE name = %s", (author_name,))
         result = cur.fetchone()
         if result:
@@ -88,7 +102,8 @@ def convert_age_limit(age_limit_str):
     return age_mapping.get(age_limit_str, 0)
 
 # Function to insert webtoon data
-def insert_webtoon_data(contentid, title, author_string, total_episodes, age_limit, serialization_status, brief_text, hashtags, interest_count):
+def insert_webtoon_data(contentid, title, author_string, total_episodes, age_limit, serialization_status, brief_text, hashtags, interest_count, weekday):
+    data = None
     try:
         # Check if webtoon already exists
         if check_webtoon_exists(contentid):
@@ -104,8 +119,8 @@ def insert_webtoon_data(contentid, title, author_string, total_episodes, age_lim
         age_limit_int = convert_age_limit(age_limit)
 
         insert_query = '''
-        INSERT INTO webtoon.naver_webtoon (id, title, author, age_limit, total_episodes, brief_text, interest_count, status, hashtags, created_dt, created_id, updated_dt, updated_id)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s, NOW(), %s)
+        INSERT INTO webtoon.naver_webtoon (id, title, author, age_limit, total_episodes, brief_text, interest_count, status, hashtags, created_dt, created_id, updated_dt, updated_id, upload_day)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s, NOW(), %s, %s)
         '''
         
         data = (
@@ -119,14 +134,15 @@ def insert_webtoon_data(contentid, title, author_string, total_episodes, age_lim
             serialization_status,
             json.dumps(hashtags_list, ensure_ascii=False),
             'system',
-            'system'
+            'system',
+            weekday
         )
 
         cur.execute(insert_query, data)
 
         update_or_insert_hashtags(contentid, hashtags_list)
         update_or_insert_author(author_dict, contentid)
-        print(f"ContentID {contentid} inserted successfully.")
+        #print(f"ContentID {contentid} inserted successfully.")
     
     except Exception as e:
         conn.rollback()
@@ -137,25 +153,26 @@ def insert_webtoon_data(contentid, title, author_string, total_episodes, age_lim
 
 # Function to read CSV and insert data
 def process_csv_and_insert():
-    csv_file_path = './crawling/result/naver_webtoon_crawl_result_update.csv'
+    csv_file_path = './crawling/result/naver_webtoon_crawl_result.csv'
     df = pd.read_csv(csv_file_path, encoding='utf-8')
 
     total_rows = len(df)
     for index, row in df.iterrows():
         try:
             insert_webtoon_data(
-                contentid=row['contentid'],
+                contentid=row['titleId'],
                 title=row['title'],
-                author_string=row['author'],
+                author_string=row['writers'],
                 total_episodes=int(row['total_episodes'].replace('총 ', '').replace('화', '').strip()),
-                age_limit=row['age_limit'],
-                serialization_status=row['serialization_status'],
+                age_limit=row['age_rating'],
+                serialization_status=row['status'],
                 brief_text=row['brief_text'],
                 hashtags=row['hashtags'],
-                interest_count=int(row.get('interest_count', '0').replace(',', '').strip())
+                interest_count=int(row.get('interest_count', '0').replace(',', '').strip()),
+                weekday=row['weekday'].strip()
             )
             progress = ((index + 1) / total_rows) * 100
-            print(f"Progress: {index + 1} : {progress:.2f}%")
+            #print(f"Progress: {index + 1} : {progress:.2f}%")
 
         except Exception as e:
             print(f"Error processing row {index + 1}: {e}\nRow data: {row.to_dict()}")

@@ -33,3 +33,4 @@ build/
 .vscode/
 /.keystore
 /Google_OAuth_Info.txt
+/src/main/resources/static/carousel/

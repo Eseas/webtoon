@@ -8,7 +8,7 @@
 </head>
 <body>
 <div class="login-container">
-    <h2>Login</h2>
+    <h2><a class="home-link" th:href="@{/}" style="text-decoration: none; color: inherit;">𝓦𝓮𝓫𝓽𝓸𝓸𝓷 𝓖𝓾𝓲𝓭𝓮</a></h2>
 
     <!-- 로그인 폼 시작 -->
     <form id="loginForm" th:action="@{/signin/process}" method="post" class="login-form" th:object="${loginFormDto}">

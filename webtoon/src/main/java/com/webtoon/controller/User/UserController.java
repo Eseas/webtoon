@@ -12,6 +12,7 @@ import com.webtoon.validator.LoginValidator;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,7 @@ public class UserController {
 
     @GetMapping("/signin")
     public String getLogin(Model model,
+                           HttpSession session,
                            HttpServletRequest request,
                            HttpServletResponse response
     ) throws Exception {
@@ -53,8 +55,10 @@ public class UserController {
         if (cookies != null) {
             for (Cookie cookie : cookies) {
                 // Access Token 쿠키가 존재하는지 확인
-                if ("accessToken".equals(cookie.getName()) && jwtUtils.validateJWT(cookie.getValue())) {
-                    // 유요한 AccessToken이 있으면 홈으로 리다이렉트
+                if (("accessToken".equals(cookie.getName()) && jwtUtils.validateJWT(cookie.getValue()))
+                    && session.getAttribute("accessToken") != null
+                ) {
+                    // 유효한 AccessToken이 있으면 홈으로 리다이렉트
                     response.sendRedirect("/");
                 }
             }
@@ -62,9 +66,29 @@ public class UserController {
         Cookie cookie = new Cookie("accessToken", "");
         cookie.setMaxAge(0);
         response.addCookie(cookie);
+        session.invalidate();
 
         model.addAttribute("loginFormDto", new LoginFormDto());
         return "signin";
+    }
+
+    @PostMapping("/signout")
+    public String logout(
+            HttpSession session,
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws Exception {
+        Cookie[] cookies = request.getCookies();
+        for(Cookie cookie : cookies) {
+            if(cookie.getName().equals("accessToken")) {
+                cookie.setMaxAge(0);
+                response.addCookie(cookie);
+                //redisUtils.setDataTo1(cookie.getValue(), 1);
+            }
+        }
+        session.invalidate();
+
+        return "redirect:/";
     }
 
     @PostMapping("/signin/process")
@@ -111,6 +135,10 @@ public class UserController {
             String encryptRefreshToken = jwtUtils.generateRefreshToken(loginDto.getId(), member.get().getRole(), member.get().getSocial_code());
             // redisUtils.setDataTo0(encryptAccessToken, encryptRefreshToken);
 
+            HttpSession session = request.getSession();
+
+            session.setAttribute("accessToken", encryptAccessToken);
+
             Cookie cookie = new Cookie("accessToken", encryptAccessToken);
             cookie.setHttpOnly(true);
             cookie.setSecure(true);
@@ -125,7 +153,8 @@ public class UserController {
     }
 
     @GetMapping("/signup")
-    public String signup() {
+    public String getSignUp(Model model) {
+        model.addAttribute("signUpDto", new SignUpDto());
         return "signup";
     }
 }

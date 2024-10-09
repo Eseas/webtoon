@@ -1,11 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" type="text/css" href="/css/navbar.css">
-    <link rel="stylesheet" type="text/css" href="/css/carousel.css">
-    <script src="/js/home.js" defer></script>
-    <title>웹툰 가이드</title>
+    <title>웹툰 가이드 - 모든 사이트의 웹툰을 찾아서</title>
 </head>
 <body>
 <div class="navbar">
@@ -25,19 +22,5 @@
         <a th:if="${session.accessToken != null}" href="/webtoon-recommend" class="nav-button">웹툰 추천</a>
     </div>
 </div>
-
-<div class="carousel">
-    <div class="carousel-inner" id="carousel-inner">
-        <!-- Images will be dynamically added here -->
-    </div>
-    <a class="carousel-control-prev" href="#" id="carousel-control-prev" role="button">&#10094;</a>
-    <a class="carousel-control-next" href="#" id="carousel-control-next" role="button">&#10095;</a>
-    <div class="carousel-indicators" id="carousel-indicators">
-        <!-- Indicators will be dynamically added here -->
-    </div>
-</div>
-
-<!-- Add content here -->
-
 </body>
 </html>

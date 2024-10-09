@@ -8,6 +8,6 @@ import java.util.Optional;
 public interface UserService {
     boolean loginCheck(LoginDto loginDto) throws Exception;
     Optional<Member> getMemberInDB(String email) throws Exception;
-    Optional<Member> getGoogleMemberInDB(String loginId) throws Exception;
-    Member saveMemberInDB(Member member, String socialCode) throws Exception;
+    Member findMemberInDB(Member member, String socialCode) throws Exception;
+    Long saveMember(Member member) throws Exception;
 }

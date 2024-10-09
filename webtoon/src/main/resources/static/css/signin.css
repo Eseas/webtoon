@@ -148,3 +148,7 @@ button:hover {
 .login-container .social-login button:hover {
     opacity: .7
 }
+
+.login-container .home-link {
+    font-size:24px;
+}
