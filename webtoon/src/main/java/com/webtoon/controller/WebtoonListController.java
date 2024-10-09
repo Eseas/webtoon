@@ -1,0 +1,15 @@
+package com.webtoon.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+
+@Controller
+public class WebtoonListController {
+
+    @GetMapping("/api/getNextPage")
+    public String getNextPage() {
+
+        return "";
+    }
+
+}

@@ -38,6 +38,18 @@ public class Member {
     @Column(name = "age")
     private Integer age;
 
+    @Column(name = "age_range")
+    private String ageRange;
+
+    @Column(name = "social_code", length = 5)
+    private String social_code;
+
+    @Column(name = "role", length = 5)
+    private String role;
+
+    @Column(name = "gender", length = 5)
+    private String gender;
+
     @Column(name = "phone_num", length = 20)
     private String phone_num;
 
@@ -63,14 +75,8 @@ public class Member {
     @Column(name = "updated_id", nullable = false)
     private String updated_id;
 
-    @Column(name = "social_code", length = 5)
-    private String social_code;
-
-    @Column(name = "role", length = 5)
-    private String role;
-
     @Builder
-    public Member(Long id, String loginId, String pwd, String name, String email, String birth, Integer age, String phone_num, Integer wrong_pwd_cnt, String using_state, Date created_dt, String created_id, Date updated_dt, String updated_id, String social_code, String role) {
+    public Member(Long id, String loginId, String pwd, String name, String email, String birth, Integer age, String ageRange, String social_code, String role, String gender, String phone_num, Integer wrong_pwd_cnt, String using_state, Date created_dt, String created_id, Date updated_dt, String updated_id) {
         this.id = id;
         this.loginId = loginId;
         this.pwd = pwd;
@@ -78,6 +84,10 @@ public class Member {
         this.email = email;
         this.birth = birth;
         this.age = age;
+        this.ageRange = ageRange;
+        this.social_code = social_code;
+        this.role = role;
+        this.gender = gender;
         this.phone_num = phone_num;
         this.wrong_pwd_cnt = wrong_pwd_cnt;
         this.using_state = using_state;
@@ -85,8 +95,6 @@ public class Member {
         this.created_id = created_id;
         this.updated_dt = updated_dt;
         this.updated_id = updated_id;
-        this.social_code = social_code;
-        this.role = role;
     }
 
     public void increaseFailureCount() {

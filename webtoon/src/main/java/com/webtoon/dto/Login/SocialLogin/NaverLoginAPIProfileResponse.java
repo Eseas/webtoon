@@ -10,11 +10,6 @@ public class NaverLoginAPIProfileResponse implements LoginAPIProfileResponse {
     }
 
     @Override
-    public String getId() {
-        return jsonNode.get("id").asText();
-    }
-
-    @Override
     public String getLoginId() {
         return jsonNode.get("login_id").asText();
     }

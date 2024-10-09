@@ -10,11 +10,6 @@ public class GoogleLoginAPIProfileResponse implements LoginAPIProfileResponse {
     }
 
     @Override
-    public String getId() {
-        return jsonNode.get("sub").asText();
-    }
-
-    @Override
     public String getLoginId() {
         return jsonNode.get("email").asText();
     }

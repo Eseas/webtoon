@@ -32,10 +32,7 @@ public class SocialLoginController {
 
     @GetMapping("/signin/oauth2/code/google")
     public String getGoogleSignin(
-            @RequestParam(name = "code", required = false) String code,
-            @RequestParam(name = "error", required = false) String error,
-            @RequestParam(name = "error_description", required = false) String error_description,
-            @RequestParam(name = "state", required = false) String state,
+            @ModelAttribute SocialLoginAuthResponse socialLoginAuthResponse,
             Model model,
             HttpServletResponse response
     ) throws Exception {
@@ -48,21 +45,22 @@ public class SocialLoginController {
          * 6. 사용자의 정보가 member 테이블에 존재한다면, 서버 Access Token을 쿠키에 담은 후 홈으로 이동시킨다.
          */
 
-        if(!(error == null || error.isEmpty())) {
-            log.warn("error : processing login naver = {}",error);
-            log.warn("error_description : processing login naver = {}",error_description);
-            model.addAttribute("msg", error_description);
+        if(!(socialLoginAuthResponse.getError() == null || socialLoginAuthResponse.getError().isEmpty())) {
+            log.warn("error : processing login naver = {}", socialLoginAuthResponse.getError());
+            log.warn("error_description : processing login naver = {}",socialLoginAuthResponse.getError_description());
+            model.addAttribute("msg", socialLoginAuthResponse.getError_description());
             return "closecurrentpage";
         }
 
-        String accessToken = socialLoginService.getAccessToken(code, "SC002");
+        String accessToken = socialLoginService.getAccessToken(socialLoginAuthResponse.getCode(), "SC002");
         GoogleLoginAPIProfileResponse accountProfile = (GoogleLoginAPIProfileResponse) socialLoginService.getSocialUserInfo(accessToken, "SC002");
         log.info("accountProfile = {}", accountProfile);
         if(accessToken != null) {
-            socialLoginService.memberInsertInDB(accountProfile, "SC002");
-
-            String encryptAccessToken = jwtUtils.generateAccessToken(accountProfile.getId(), "USER", "SC002");
-            String encryptRefreshToken = jwtUtils.generateRefreshToken(accountProfile.getId(), "USER", "SC002");
+            if(socialLoginService.memberInsertInDB(accountProfile, "SC002")) {
+                log.info("memberInsertDB success");
+            }
+            String encryptAccessToken = jwtUtils.generateAccessToken(accountProfile.getLoginId(), "USER", "SC002");
+            String encryptRefreshToken = jwtUtils.generateRefreshToken(accountProfile.getLoginId(), "USER", "SC002");
             // redisUtils.setDataTo0(encryptAccessToken, encryptRefreshToken);
 
             Cookie cookie = new Cookie("accessToken", encryptAccessToken);
@@ -76,7 +74,7 @@ public class SocialLoginController {
         } else {
             String msg = "로그인에_실패했습니다.";
             model.addAttribute("msg", msg);
-            return "redirect:/signin";
+            return "closecurrentpage";
         }
     }
 
@@ -97,10 +95,11 @@ public class SocialLoginController {
         KakaoLoginAPIProfileResponse accountProfile = (KakaoLoginAPIProfileResponse) socialLoginService.getSocialUserInfo(accessToken, "SC004");
 
         if(accessToken != null) {
-            socialLoginService.memberInsertInDB(accountProfile, "SC004");
-            String encryptAccessToken = jwtUtils.generateAccessToken(accountProfile.getId(), "USER", "SC004");
-            String encryptRefreshToken = jwtUtils.generateRefreshToken(accountProfile.getId(), "USER", "SC004");
-            log.info("encryptAccessToken : {}", encryptAccessToken);
+            if(socialLoginService.memberInsertInDB(accountProfile, "SC004")) {
+                log.info("memberInsertDB success");
+            }
+            String encryptAccessToken = jwtUtils.generateAccessToken(accountProfile.getLoginId(), "USER", "SC004");
+            String encryptRefreshToken = jwtUtils.generateRefreshToken(accountProfile.getLoginId(), "USER", "SC004");
             // redisUtils.setDataTo0(encryptAccessToken, encryptRefreshToken);
 
             Cookie cookie = new Cookie("accessToken", encryptAccessToken);
@@ -114,7 +113,7 @@ public class SocialLoginController {
         } else {
             String msg = "로그인에_실패했습니다.";
             model.addAttribute("msg", msg);
-            return "redirect:/signin";
+            return "closecurrentpage";
         }
     }
 
@@ -135,20 +134,27 @@ public class SocialLoginController {
         }
 
         String accessToken = socialLoginService.getAccessToken(code, "SC003");
-        NaverLoginAPIProfileResponse userInfo = (NaverLoginAPIProfileResponse) socialLoginService.getSocialUserInfo(accessToken, "SC003");
+        NaverLoginAPIProfileResponse accountProfile = (NaverLoginAPIProfileResponse) socialLoginService.getSocialUserInfo(accessToken, "SC003");
 
-        log.info("Naver Social Login User Info : {}", userInfo);
+        if(accessToken != null) {
+            if(socialLoginService.memberInsertInDB(accountProfile, "SC004")) {
+                log.info("memberInsertDB success");
+            }
+            String encryptAccessToken = jwtUtils.generateAccessToken(accountProfile.getLoginId(), "USER", "SC003");
+            String encryptRefreshToken = jwtUtils.generateRefreshToken(accountProfile.getLoginId(), "USER", "SC003");
+            // redisUtils.setDataTo0(encryptAccessToken, encryptRefreshToken);
 
-        String encryptAccessToken = jwtUtils.generateAccessToken("test_user", "USER", "SC003");
-        String encryptRefreshToken = jwtUtils.generateRefreshToken("test_user", "USER", "SC003");
-        // redisUtils.setDataTo0(encryptAccessToken, encryptRefreshToken);
-
-        Cookie cookie = new Cookie("accessToken", encryptAccessToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(600);
-        response.addCookie(cookie);
-        return "closecurrentpage";
+            Cookie cookie = new Cookie("accessToken", encryptAccessToken);
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true);
+            cookie.setPath("/");
+            cookie.setMaxAge(600);
+            response.addCookie(cookie);
+            return "closecurrentpage";
+        } else {
+            String msg = "로그인에_실패했습니다.";
+            model.addAttribute("msg", msg);
+            return "closecurrentpage";
+        }
     }
 }

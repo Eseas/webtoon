@@ -177,7 +177,12 @@ public class SocialLoginServiceImpl implements SocialLoginService {
     public boolean memberInsertInDB(LoginAPIProfileResponse userInfo,
                                     String SocialCode
     ) throws Exception {
-        if(userInfo == null || SocialCode == null || IsSocialMemberInDB(userInfo.getLoginId(), SocialCode)) {
+        if(userInfo == null || SocialCode == null) {
+            log.info("error : processing insert db");
+            return false;
+        }
+
+        if(IsSocialMemberInDB(userInfo.getLoginId(), SocialCode)) {
             log.info("existed user");
             return false;
         }
@@ -198,12 +203,13 @@ public class SocialLoginServiceImpl implements SocialLoginService {
                 break;
             case "SC003":   // naver
                 NaverLoginAPIProfileResponse naverUserInfo = (NaverLoginAPIProfileResponse) userInfo;
-                int age = calculateAge(naverUserInfo.getBirthYear());
                 Member naverMember = Member.builder()
                         .loginId(naverUserInfo.getLoginId())
                         .name(naverUserInfo.getName())
+                        .gender(naverUserInfo.getGender())
                         .birth(naverUserInfo.getBirthYear())
-                        .age(age)
+                        .age(calculateAge(naverUserInfo.getBirthYear()))
+                        .ageRange(naverUserInfo.getAge())
                         .using_state("US001")
                         .role("USER")
                         .social_code("SC003")
@@ -214,7 +220,19 @@ public class SocialLoginServiceImpl implements SocialLoginService {
                 break;
             case "SC004":   // kakao
                 KakaoLoginAPIProfileResponse kakaoUserInfo = (KakaoLoginAPIProfileResponse) userInfo;
+                Member kakaoMember = Member.builder()
+                        .loginId(kakaoUserInfo.getLoginId())
+                        .name(kakaoUserInfo.getName())
+                        .birth(kakaoUserInfo.getBirth())
+                        .age(calculateAge(kakaoUserInfo.getBirth()))
+                        .using_state("US001")
+                        .role("USER")
+                        .social_code("SC004")
+                        .created_id("admin")
+                        .updated_id("admin")
+                        .build();
 
+                memberRepository.save(kakaoMember);
                 break;
         }
         return false;
