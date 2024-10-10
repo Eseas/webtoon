@@ -1,8 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>웹툰 가이드 - 모든 사이트의 웹툰을 찾아서</title>
+    <link rel="stylesheet" type="text/css" href="/css/navbar.css">
+    <link rel="stylesheet" type="text/css" href="/css/webtoonList.css">
+    <script src="/js/webtoonList.js" defer></script>
 </head>
 <body>
 <div class="navbar">
@@ -22,5 +25,13 @@
         <a th:if="${session.accessToken != null}" href="/webtoon-recommend" class="nav-button">웹툰 추천</a>
     </div>
 </div>
+
+<div class="webtoon-list" id="webtoon-list">
+    <!-- 웹툰 항목이 JavaScript를 통해 동적으로 추가됩니다 -->
+</div>
+
+<!-- Intersection Observer 타겟 -->
+<div id="observer-target" class="observer-target"></div>
+
 </body>
 </html>

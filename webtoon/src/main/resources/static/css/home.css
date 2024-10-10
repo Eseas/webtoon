@@ -1,0 +1,158 @@
+/* home.css */
+
+.webtoon-section {
+    margin: 30px auto;
+    width: 100%; /* 너비를 100%로 설정하여 가로 스크롤을 방지 */
+    max-width: 1200px;
+    text-align: left;
+    position: relative;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    padding-left: 10%;
+    padding-right: 10%;
+    position: relative;
+}
+
+.section-header h2 {
+    font-size: 1.5em;
+    margin: 0;
+    color: #333;
+    flex: 0 0 auto;
+}
+
+.section-divider {
+    flex-grow: 1;
+    height: 1px;
+    background-color: #ccc;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.more-button {
+    cursor: pointer;
+    position: relative;
+    right: 0;
+    background-color: transparent;
+    color: #000;
+    border: none;
+    padding: 0;
+    font-weight: bold;
+    flex: 0 0 auto;
+}
+
+.webtoon-list {
+    display: flex;
+    flex-direction: column; /* div를 세로로 배열 */
+    overflow: hidden;
+    margin-top: 20px;
+    padding-left: 10%;
+    padding-right: 10%;
+    width: 100%; /* 부모 컨테이너의 너비를 100%로 설정 */
+}
+
+.webtoon-list-inner {
+    display: flex;
+    flex-direction: row; /* 항목들을 가로로 나열 */
+    flex-wrap: nowrap; /* 모든 항목을 한 줄로 강제 */
+    overflow-x: auto; /* 필요한 경우 가로 스크롤 허용 */
+}
+
+.webtoon-item {
+    width: 120px; /* 각 항목의 너비를 고정 */
+    height: 200px;
+    text-align: center;
+    background-color: #000000;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    flex: 0 0 auto; /* 항목이 자신의 크기를 유지하도록 설정 */
+    margin-right: 20px; /* 오른쪽에 20px 간격 추가 */
+}
+
+.webtoon-item:last-child {
+    margin-right: 0; /* 마지막 항목에는 오른쪽 간격을 추가하지 않음 */
+}
+
+.webtoon-image-placeholder {
+    position: relative;
+    width: 100%;
+    height: 160px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 5px;
+}
+
+.webtoon-title {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #333;
+    padding: 5px;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+.links-section {
+    margin: 30px auto;
+    width: 90%;
+    max-width: 1200px;
+    text-align: left;
+    position: relative;
+}
+
+.webtoon-links {
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+    margin: 30px 0;
+    padding-left: 10%;
+    padding-right: 10%;
+}
+
+.webtoon-link-item {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.naver-button {
+    cursor: pointer;
+    text-decoration: none;
+    color: #fff;
+    background-color: #1ec800;
+    padding: 15px 40px;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.kakao-page-button {
+    cursor: pointer;
+    text-decoration: none;
+    color: #000;
+    background-color: #ffe812;
+    padding: 15px 40px;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.kakao-webtoon-button {
+    cursor: pointer;
+    text-decoration: none;
+    color: #fff;
+    background-color: #000;
+    padding: 15px 40px;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 1.2em;
+}

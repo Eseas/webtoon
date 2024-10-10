@@ -1,3 +1,5 @@
+// webtoon-slider.js
+
 document.addEventListener('DOMContentLoaded', () => {
     const carouselInner = document.getElementById('carousel-inner');
     const prevButton = document.getElementById('carousel-control-prev');

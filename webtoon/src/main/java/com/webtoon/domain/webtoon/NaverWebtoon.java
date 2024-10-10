@@ -1,7 +1,10 @@
 package com.webtoon.domain.webtoon;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -9,9 +12,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
 @Entity
 @Table(name = "naver_webtoon", schema = "webtoon")
-public class NaverWebtoon {
+public class NaverWebtoon extends Webtoon {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,7 +26,7 @@ public class NaverWebtoon {
     private String title;
 
     @Column
-    private String author; // JSON field can be handled with a converter or a specific type, depending on use case.
+    private String author;
 
     @Column(name = "age_limit")
     private Integer ageLimit;
@@ -39,7 +44,7 @@ public class NaverWebtoon {
     private String status;
 
     @Column(columnDefinition = "json")
-    private String hashtags; // JSON field can be handled with a converter or a specific type, depending on use case.
+    private String hashtags;
 
     @CreationTimestamp
     @Column(name = "created_dt")
@@ -57,4 +62,13 @@ public class NaverWebtoon {
 
     @Column(name = "upload_day", length = 20)
     private String uploadDay;
+
+    @Builder
+    public NaverWebtoon(Long id, String title, String author, Integer ageLimit, Long totalEpisodes, String briefText,
+                        Long interestCount, String status, String hashtags, LocalDateTime createdDt, String createdId,
+                        LocalDateTime updatedDt, String updatedId, String uploadDay) {
+        super(id, title, author, ageLimit, totalEpisodes, briefText, status, hashtags, createdDt, createdId, updatedDt, updatedId);
+        this.interestCount = interestCount;
+        this.uploadDay = uploadDay;
+    }
 }

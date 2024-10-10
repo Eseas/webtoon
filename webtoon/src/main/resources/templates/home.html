@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" type="text/css" href="/css/navbar.css">
     <link rel="stylesheet" type="text/css" href="/css/carousel.css">
+    <link rel="stylesheet" type="text/css" href="/css/home.css">
+
     <script src="/js/home.js" defer></script>
     <title>웹툰 가이드</title>
 </head>
@@ -25,19 +27,87 @@
         <a th:if="${session.accessToken != null}" href="/webtoon-recommend" class="nav-button">웹툰 추천</a>
     </div>
 </div>
-
 <div class="carousel">
     <div class="carousel-inner" id="carousel-inner">
         <!-- Images will be dynamically added here -->
     </div>
-    <a class="carousel-control-prev" href="#" id="carousel-control-prev" role="button">&#10094;</a>
-    <a class="carousel-control-next" href="#" id="carousel-control-next" role="button">&#10095;</a>
+    <a class="carousel-control-prev" href="#" id="carousel-control-prev" role="button">&lt;</a>
+    <a class="carousel-control-next" href="#" id="carousel-control-next" role="button">&gt;</a>
     <div class="carousel-indicators" id="carousel-indicators">
         <!-- Indicators will be dynamically added here -->
     </div>
 </div>
-
-<!-- Add content here -->
-
+<div class="webtoon-section">
+    <div class="section-header">
+        <h2>신작 웹툰</h2>
+        <div class="section-divider"></div>
+        <button class="more-button">더보기</button>
+    </div>
+    <div class="webtoon-list" id="new-webtoons-wrapper">
+        <div class="webtoon-list-inner" id="new-webtoons">
+            <div class="webtoon-item" style="width: 120px; height: 160px;">
+                <div class="webtoon-image-placeholder" style="background-color: black; width: 100%; height: 100%;">
+                    <div class="webtoon-title" style="color: white; padding: 5px;">신작 웹툰 테스트 제목 1</div>
+                </div>
+            </div>
+            <div class="webtoon-item" style="width: 120px; height: 160px;">
+                <div class="webtoon-image-placeholder" style="background-color: black; width: 100%; height: 100%;">
+                    <div class="webtoon-title" style="color: white; padding: 5px;">신작 웹툰 테스트 제목 2</div>
+                </div>
+            </div>
+            <div class="webtoon-item" style="width: 120px; height: 160px;">
+                <div class="webtoon-image-placeholder" style="background-color: black; width: 100%; height: 100%;">
+                    <div class="webtoon-title" style="color: white; padding: 5px;">신작 웹툰 테스트 제목 3</div>
+                </div>
+            </div>
+            <div class="webtoon-item" style="width: 120px; height: 160px;">
+                <div class="webtoon-image-placeholder" style="background-color: black; width: 100%; height: 100%;">
+                    <div class="webtoon-title" style="color: white; padding: 5px;">신작 웹툰 테스트 제목 4</div>
+                </div>
+            </div>
+            <div class="webtoon-item" style="width: 120px; height: 160px;">
+                <div class="webtoon-image-placeholder" style="background-color: black; width: 100%; height: 100%;">
+                    <div class="webtoon-title" style="color: white; padding: 5px;">신작 웹툰 테스트 제목 5</div>
+                </div>
+            </div>
+            <div class="webtoon-item" style="width: 120px; height: 160px;">
+                <div class="webtoon-image-placeholder" style="background-color: black; width: 100%; height: 100%;">
+                    <div class="webtoon-title" style="color: white; padding: 5px;">신작 웹툰 테스트 제목 6</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="webtoon-section">
+    <div class="section-header">
+        <h2>인기 웹툰</h2>
+        <div class="section-divider"></div>
+        <button class="more-button">더보기</button>
+    </div>
+    <div class="webtoon-list" id="popular-webtoons">
+        <div class="webtoon-item" style="width: 120px; height: 160px;">
+            <div class="webtoon-image-placeholder" style="background-color: black; width: 100%; height: 100%;">
+                <div class="webtoon-title" style="color: white; padding: 5px;">인기 웹툰 테스트 제목 1</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="links-section">
+    <div class="section-header">
+        <h2>웹툰 사이트 링크</h2>
+        <div class="section-divider"></div>
+    </div>
+    <div class="webtoon-links">
+        <div class="webtoon-link-item">
+            <button onclick="window.open('https://comic.naver.com', '_blank')" class="naver-button">네이버 웹툰</button>
+        </div>
+        <div class="webtoon-link-item">
+            <button onclick="window.open('https://page.kakao.com', '_blank')" class="kakao-page-button">카카오페이지</button>
+        </div>
+        <div class="webtoon-link-item">
+            <button onclick="window.open('https://webtoon.kakao.com', '_blank')" class="kakao-webtoon-button">카카오 웹툰</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
