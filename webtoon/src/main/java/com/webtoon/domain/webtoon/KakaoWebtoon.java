@@ -6,9 +6,13 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -25,7 +29,8 @@ public class KakaoWebtoon extends Webtoon {
     private String title;
 
     @Column(nullable = false)
-    private String author;
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, String> author;
 
     @Column(name = "total_episodes", nullable = false)
     private Long totalEpisodes;
@@ -60,7 +65,7 @@ public class KakaoWebtoon extends Webtoon {
     private String updatedId;
 
     @Builder
-    public KakaoWebtoon(Long id, String title, String author, Long totalEpisodes, String status, Integer uploadCycle,
+    public KakaoWebtoon(Long id, String title, Map<String, String> author, Long totalEpisodes, String status, Integer uploadCycle,
                         Integer ageLimit, String briefText, String hashtags, LocalDateTime createdDt, String createdId,
                         LocalDateTime updatedDt, String updatedId) {
         super(id, title, author, ageLimit, totalEpisodes, briefText, status, hashtags, createdDt, createdId, updatedDt, updatedId);

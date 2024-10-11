@@ -6,5 +6,5 @@ import java.util.ArrayList;
 
 public interface KakaoWebtoonService {
     KakaoWebtoon findById(Long id);
-    ArrayList<KakaoWebtoon> findPage(Integer limit, Integer offset);
+    ArrayList<KakaoWebtoon> findPage(int userlimit, int page);
 }

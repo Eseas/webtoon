@@ -14,7 +14,7 @@ import java.util.Optional;
 public interface KakaoWebtoonRepository extends JpaRepository<KakaoWebtoon, Long> {
     Optional<KakaoWebtoon> findById(Long id);
 
-    @Query("SELECT k_w FROM KakaoWebtoon k_w ORDER BY k_w.id ASC LIMIT :limit OFFSET :offset")
+    @Query("SELECT k_w FROM KakaoWebtoon k_w WHERE k_w.ageLimit != 19 ORDER BY k_w.id ASC LIMIT :limit OFFSET :offset")
     ArrayList<KakaoWebtoon> findLimitOffset(@Param("limit") Integer limit,
                                             @Param("offset") Integer offset
                                  );

@@ -6,10 +6,13 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -26,7 +29,8 @@ public class NaverWebtoon extends Webtoon {
     private String title;
 
     @Column
-    private String author;
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, String> author;
 
     @Column(name = "age_limit")
     private Integer ageLimit;
@@ -64,7 +68,7 @@ public class NaverWebtoon extends Webtoon {
     private String uploadDay;
 
     @Builder
-    public NaverWebtoon(Long id, String title, String author, Integer ageLimit, Long totalEpisodes, String briefText,
+    public NaverWebtoon(Long id, String title, Map<String, String> author, Integer ageLimit, Long totalEpisodes, String briefText,
                         Long interestCount, String status, String hashtags, LocalDateTime createdDt, String createdId,
                         LocalDateTime updatedDt, String updatedId, String uploadDay) {
         super(id, title, author, ageLimit, totalEpisodes, briefText, status, hashtags, createdDt, createdId, updatedDt, updatedId);

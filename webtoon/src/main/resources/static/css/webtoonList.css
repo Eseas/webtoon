@@ -1,0 +1,75 @@
+/* 웹툰 리스트 전체 컨테이너 스타일 */
+#webtoon-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 2%;
+    background-color: #f9f9f9;
+    margin: 0 20%; /* 좌우 빈 공간 추가 */
+}
+
+/* 웹툰 항목 스타일 */
+.webtoon-item {
+    width: 20%; /* 1/4 크기, 좌우 10% 여유 공간 고려 */
+    margin-bottom: 20px;
+    background-color: #ffffff;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+}
+
+/* 웹툰 이미지 스타일 */
+.webtoon-thumb img {
+    width: 100%;
+    height: 200px; /* 이미지 크기 고정 */
+    object-fit: cover;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* 웹툰 제목 스타일 */
+.webtoon-title {
+    font-size: 1rem;
+    color: #333;
+    text-align: center;
+    margin-top: 10px;
+    word-break: keep-all;
+}
+
+/* Intersection Observer 타겟 스타일 */
+#observer-target {
+    width: 100%;
+    height: 50px;
+    background: transparent;
+}
+
+/* 검은색 네비게이션 바 스타일 */
+#footer-navbar {
+    width: 100%;
+    height: 60px;
+    background-color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.2rem;
+    margin-top: 20px;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 8px solid rgba(0, 0, 0, 0.1);  /* 투명한 회색 */
+    border-top: 8px solid rgba(0, 0, 0, 0.6);  /* 진한 회색 */
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;  /* 중앙 정렬을 위한 여백 */
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

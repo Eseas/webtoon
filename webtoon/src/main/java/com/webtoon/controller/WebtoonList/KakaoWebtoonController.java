@@ -8,12 +8,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
@@ -30,13 +33,20 @@ public class KakaoWebtoonController {
     }
 
     @GetMapping("/api/webtoons")
-    public ArrayList<? extends Webtoon> getWebtoons(
+    public ResponseEntity<ArrayList<Webtoon>> getWebtoons(
         @RequestParam(name="limit") Integer limit,
         @RequestParam(name="page") Integer page
     ) throws Exception {
-        ArrayList<Webtoon> webtoons = new ArrayList<>();
-        int offset = (page - 1) * 20 + (page == 1 ? 0 : 40);
-        webtoons.addAll(kakaoWebtoonService.findPage(limit, offset));
-        return webtoons;
+        if(limit == null || page == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        try {
+            ArrayList<Webtoon> webtoons = new ArrayList<>();
+            webtoons.addAll(kakaoWebtoonService.findPage(limit, page));
+            return new ResponseEntity<>(webtoons, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
