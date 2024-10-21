@@ -38,13 +38,13 @@ while True:
 
 
 # 저장할 폴더 경로 설정
-output_dir = os.path.join(os.getcwd(), 'crawling', 'result')
+output_dir = os.path.join(os.getcwd(), 'crawling')
 os.makedirs(output_dir, exist_ok=True)  # 폴더가 없으면 생성
 
 # 결과를 저장할 CSV 파일 경로 설정
 csv_file = os.path.join(output_dir, "kakaopage_webtoons_base_info.csv")
 
-with open(csv_file, mode="w", newline='', encoding='utf-8') as file:
+with open(csv_file, mode="a", newline='', encoding='utf-8') as file:
     writer = csv.writer(file)
     writer.writerow(["contentId", "age"])
 
@@ -74,8 +74,9 @@ with open(csv_file, mode="w", newline='', encoding='utf-8') as file:
 
             # 해당 웹툰의 나이 뱃지 확인
             try:
-                badge = item.find_element(By.XPATH, ".//div[@class='absolute top-4pxr right-4pxr']/img")
+                badge = item.find_element(By.XPATH, ".//div[@class='absolute right-4pxr top-4pxr']/img")
                 badge_alt = badge.get_attribute("alt")
+                print(badge_alt)
 
                 if "19세" in badge_alt:
                     age = "19세"
@@ -85,6 +86,7 @@ with open(csv_file, mode="w", newline='', encoding='utf-8') as file:
                     age = "all"
             except:
                 # 뱃지가 없는 경우 'all'로 설정
+                print("찾지 못함")
                 age = "all"
 
             # 결과를 CSV 파일에 작성

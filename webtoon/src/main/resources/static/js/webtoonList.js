@@ -67,14 +67,22 @@ function loadMoreWebtoons() {
 function addWebtoonItem(webtoon) {
     const webtoonItem = document.createElement('div');
     webtoonItem.className = 'webtoon-item';
+
+    // 클릭하면 웹툰 상세 페이지로 이동하도록 이벤트 추가
+    webtoonItem.addEventListener('click', function() {
+        window.location.href = `/webtoon/detail?id=${webtoon.id}&platform=kakao`;
+    });
+
     webtoonItem.innerHTML = `
         <div class="webtoon-thumb">
             <img src="/static/kakao_main_image/${webtoon.id}/${webtoon.id}.jpg" alt="${webtoon.title}">
         </div>
         <div class="webtoon-title">${webtoon.title}</div>
     `;
+
     webtoonList.appendChild(webtoonItem);
 }
+
 
 /* Intersection Observer 설정 */
 const observer = new IntersectionObserver(entries => {

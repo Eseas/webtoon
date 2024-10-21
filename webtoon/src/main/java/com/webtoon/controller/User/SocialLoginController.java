@@ -6,7 +6,9 @@ import com.webtoon.security.JwtUtils;
 import com.webtoon.service.SocialLogin.SocialLoginService;
 import com.webtoon.service.User.UserService;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +36,7 @@ public class SocialLoginController {
     public String getGoogleSignin(
             @ModelAttribute SocialLoginAuthResponse socialLoginAuthResponse,
             Model model,
+            HttpServletRequest request,
             HttpServletResponse response
     ) throws Exception {
         /**
@@ -59,9 +62,14 @@ public class SocialLoginController {
             if(socialLoginService.memberInsertInDB(accountProfile, "SC002")) {
                 log.info("memberInsertDB success");
             }
+
             String encryptAccessToken = jwtUtils.generateAccessToken(accountProfile.getLoginId(), "USER", "SC002");
             String encryptRefreshToken = jwtUtils.generateRefreshToken(accountProfile.getLoginId(), "USER", "SC002");
             // redisUtils.setDataTo0(encryptAccessToken, encryptRefreshToken);
+
+            HttpSession session = request.getSession();
+
+            session.setAttribute("accessToken", encryptAccessToken);
 
             Cookie cookie = new Cookie("accessToken", encryptAccessToken);
             cookie.setHttpOnly(true);
@@ -82,6 +90,7 @@ public class SocialLoginController {
     public String getKakaoSignin(
             @ModelAttribute SocialLoginAuthResponse socialLoginAuthResponse,
             Model model,
+            HttpSession session,
             HttpServletResponse response
     ) throws Exception {
         if(!(socialLoginAuthResponse.getError() == null || socialLoginAuthResponse.getError().isEmpty())) {
@@ -102,6 +111,8 @@ public class SocialLoginController {
             String encryptRefreshToken = jwtUtils.generateRefreshToken(accountProfile.getLoginId(), "USER", "SC004");
             // redisUtils.setDataTo0(encryptAccessToken, encryptRefreshToken);
 
+            session.setAttribute("accessToken", encryptAccessToken);
+
             Cookie cookie = new Cookie("accessToken", encryptAccessToken);
             cookie.setHttpOnly(true);
             cookie.setSecure(true);
@@ -119,21 +130,19 @@ public class SocialLoginController {
 
     @GetMapping("/signin/oauth2/code/naver")
     public String getNaverSignin(
-            @RequestParam(value = "code", required = false) String code,
-            @RequestParam(value = "error", required = false) String error,
-            @RequestParam(value = "error_description", required = false) String error_description,
+            @ModelAttribute SocialLoginAuthResponse socialLoginAuthResponse,
             Model model,
+            HttpSession session,
             HttpServletResponse response
     ) throws Exception {
-
-        if(!(error == null || error.isEmpty())) {
-            log.warn("error : processing login naver = {}",error);
-            log.warn("error_description : processing login naver = {}",error_description);
-            model.addAttribute("msg", error_description);
+        if(!(socialLoginAuthResponse.getError() == null || socialLoginAuthResponse.getError().isEmpty())) {
+            log.warn("error : processing login kakao = {}",socialLoginAuthResponse.getError());
+            log.warn("error_description : processing login kakao = {}",socialLoginAuthResponse.getError_description());
+            model.addAttribute("msg", socialLoginAuthResponse.getError_description());
             return "closecurrentpage";
         }
 
-        String accessToken = socialLoginService.getAccessToken(code, "SC003");
+        String accessToken = socialLoginService.getAccessToken(socialLoginAuthResponse.getCode(), "SC003");
         NaverLoginAPIProfileResponse accountProfile = (NaverLoginAPIProfileResponse) socialLoginService.getSocialUserInfo(accessToken, "SC003");
 
         if(accessToken != null) {
@@ -143,6 +152,8 @@ public class SocialLoginController {
             String encryptAccessToken = jwtUtils.generateAccessToken(accountProfile.getLoginId(), "USER", "SC003");
             String encryptRefreshToken = jwtUtils.generateRefreshToken(accountProfile.getLoginId(), "USER", "SC003");
             // redisUtils.setDataTo0(encryptAccessToken, encryptRefreshToken);
+
+            session.setAttribute("accessToken", encryptAccessToken);
 
             Cookie cookie = new Cookie("accessToken", encryptAccessToken);
             cookie.setHttpOnly(true);

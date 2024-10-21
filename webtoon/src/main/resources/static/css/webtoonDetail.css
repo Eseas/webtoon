@@ -1,0 +1,99 @@
+/* 웹툰 정보를 표시하는 컨테이너 스타일 */
+#webtoon-container {
+    display: flex;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 메인 이미지 스타일 */
+#webtoon-container img {
+    flex: 1;
+    max-width: 400px;
+    height: auto;
+    object-fit: contain;
+    border-radius: 10px;
+    margin-right: 20px;
+}
+
+/* 구분선 스타일 */
+#webtoon-container .divider {
+    width: 2px;
+    background-color: #ddd;
+    margin: 0 20px;
+}
+
+/* 웹툰 정보 스타일 */
+#webtoon-container .webtoon-info {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* 웹툰 보러 가기 버튼 스타일 */
+#webtoon-container a button {
+    width: 100%;
+    height: 60px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-bottom: 20px;
+}
+
+#webtoon-container a button:hover {
+    background-color: #0056b3;
+}
+
+/* 제목 스타일 */
+#webtoon-container h2 {
+    font-size: 2em;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+/* 작가, 에피소드 등 정보 스타일 */
+#webtoon-container p {
+    font-size: 1em;
+    margin: 5px 0;
+    color: #666;
+}
+
+/* 해시태그 스타일 */
+#webtoon-container p.hashtags {
+    font-size: 0.9em;
+    color: #888;
+    margin-top: 15px;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 600px) {
+    #webtoon-container {
+        flex-direction: column;
+        padding: 10px;
+    }
+
+    #webtoon-container img {
+        max-width: 100%;
+        margin: 0 auto 20px;
+    }
+
+    #webtoon-container .divider {
+        display: none;
+    }
+
+    #webtoon-container h2 {
+        font-size: 1.5em;
+    }
+
+    #webtoon-container p {
+        font-size: 0.9em;
+    }
+}

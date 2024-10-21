@@ -2,11 +2,12 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>웹툰 가이드 - 모든 사이트의 웹툰을 찾아서</title>
     <link rel="stylesheet" type="text/css" href="/css/navbar.css">
-    <link rel="stylesheet" type="text/css" href="/css/webtoonList.css">
-    <script src="/js/webtoonList.js" defer></script>
+    <link rel="stylesheet" type="text/css" href="/css/webtoonDetail.css">
+
+    <script src="/js/webtoonDetail.js" defer></script>
     <script src="/js/searchdiv.js" defer></script>
+    <title>웹툰 가이드 - 모든 사이트의 웹툰을 찾아서</title>
 </head>
 <body>
 <div class="navbar">
@@ -52,16 +53,8 @@
         </ul>
     </div>
 </div>
+<div id="webtoon-container">
 
-<h1>현재 테스트를 위해 카카오 페이지 웹툰만 보여지고 있습니다.</h1>
-
-<div class="webtoon-list" id="webtoon-list">
-    <!-- 웹툰 항목이 JavaScript를 통해 동적으로 추가됩니다 -->
-</div>
-<div id="loading-indicator" class="spinner" style="display: none;"></div>
-<div id="observer-target" class="observer-target"></div>
-<div id="footer-navbar">
-    네비게이션 바
 </div>
 </body>
 </html>

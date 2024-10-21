@@ -7,6 +7,7 @@
     <link rel="stylesheet" type="text/css" href="/css/home.css">
 
     <script src="/js/home.js" defer></script>
+    <script src="/js/searchdiv.js" defer></script>
     <title>웹툰 가이드 - 모든 사이트의 웹툰을 찾아서</title>
 </head>
 <body>
@@ -15,6 +16,13 @@
         <a href="/" class="nav-button">웹툰가이드</a>
     </div>
     <div class="navbar-right">
+        <a href="#" class="nav-button" id="search-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zm-5.442 1.31a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
+            </svg>
+            검색
+        </a>
+        <span class="separator"></span>
         <a href="/signin" th:if="${session.accessToken == null}" class="nav-button">로그인</a>
         <form th:if="${session.accessToken != null}" th:action="@{/signout}" method="post" style="display:inline;">
             <button type="submit" class="nav-button">로그아웃</button>
@@ -25,6 +33,25 @@
         <a href="/webtoon-list" class="nav-button">웹툰 리스트</a>
         <span th:if="${session.accessToken != null}" class="separator"></span>
         <a th:if="${session.accessToken != null}" href="/webtoon-recommend" class="nav-button">웹툰 추천</a>
+    </div>
+</div>
+
+<div id="search-container" style="display:none;" class="search-container">
+    <button id="close-search" class="close-button">&times;</button>
+    <select id="search-category" class="search-category">
+        <option value="title">제목</option>
+        <option value="author">작가</option>
+        <option value="genre">장르</option>
+    </select>
+    <input type="text" id="search-input" class="search-input" placeholder="검색어를 입력하세요">
+    <button id="search-submit" class="nav-button search-button">검색</button>
+    <div id="recent-searches" class="recent-searches">
+        <p>최근 검색어:</p>
+        <ul>
+            <li>예시 검색어 1</li>
+            <li>예시 검색어 2</li>
+            <li>예시 검색어 3</li>
+        </ul>
     </div>
 </div>
 <div class="carousel">

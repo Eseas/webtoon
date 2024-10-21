@@ -1,9 +1,9 @@
 package com.webtoon.service.Webtoon;
 
 import com.webtoon.domain.webtoon.KakaoWebtoon;
+import com.webtoon.dto.Webtoon.WebtoonDetailDto;
 import com.webtoon.repository.jpa.KakaoWebtoonRepository;
 import com.webtoon.utils.RedisUtils;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,13 +14,19 @@ import java.util.ArrayList;
 @Service
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @Slf4j
-public class KakaoWebtoonServiceImpl implements KakaoWebtoonService {
+public class WebtoonServiceImpl implements WebtoonService {
     private final KakaoWebtoonRepository kakaoWebtoonRepository;
 
     private final RedisUtils redisUtils;
 
     @Override
-    public KakaoWebtoon findById(Long id) {
+    public KakaoWebtoon findById(WebtoonDetailDto webtoonDetailDto) {
+        switch (webtoonDetailDto.getPlatform().toLowerCase()) {
+            case "naver":
+                return null;
+            case "kakao":
+                return kakaoWebtoonRepository.findById(webtoonDetailDto.getId()).orElse(null);
+        }
         return null;
     }
 

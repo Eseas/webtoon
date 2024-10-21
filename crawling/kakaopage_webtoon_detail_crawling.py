@@ -41,7 +41,7 @@ while True:
         time.sleep(5)
 
 # 저장할 폴더 경로 설정
-output_dir = os.path.join(os.getcwd(), 'crawling', 'result')
+output_dir = os.path.join(os.getcwd(), 'crawling')
 os.makedirs(output_dir, exist_ok=True)
 
 # 결과를 저장할 CSV 파일 경로
@@ -69,10 +69,6 @@ with open(webtoons, mode="r", newline='', encoding='utf-8') as file:
 
 base_image_path = os.path.join(os.getcwd(), 'webtoon', 'src', 'main', 'resources', 'static', 'kakao_main_image')
 
-# 일정 크롤링 후 브라우저를 새로 고침
-REFRESH_LIMIT = 100  # 100개마다 새로고침
-START_INDEX = 3083  # Start from the 755th item
-
 # 이미지 다운로드 함수
 def download_image(image_url, image_filename, max_retries=3):
     for attempt in range(max_retries):
@@ -98,24 +94,52 @@ def remove_commas(text):
         return text.replace(",", "")  # 쉼표를 제거
     return text
 
+existing_content_ids = set()
+if os.path.exists(detail_info_file):
+    with open(detail_info_file, mode="r", encoding='utf-8') as file:
+        reader = csv.reader(file)
+        next(reader)  # 헤더 건너뛰기
+        for row in reader:
+            existing_content_ids.add(row[0])  # contentId 추가
+
 # 상세 정보를 저장할 CSV 파일 열기
 with open(detail_info_file, mode="a", newline='', encoding='utf-8') as file:
     writer = csv.writer(file)
 
     # 파일이 없을 때만 헤더를 추가
     if not file_exists:
-        writer.writerow(["contentid", "title", "author", "total_episodes", "age_limit", "serialization_status", "cycle", "badges", "brief_text", "hashtags"])
+        writer.writerow(["contentid", "title", "author", "total_episodes", "age_limit", "view_count", "comment_count", "last_upload_day", "serialization_status", "cycle", "badges", "brief_text", "hashtags"])
 
     # 각 contentId에 대해 크롤링 수행
     for index, content_id in enumerate(content_ids):
         try:
-            if index < START_INDEX:
-            # Skip items before START_INDEX
+            if content_id in existing_content_ids:
                 continue
+
             url = f"https://page.kakao.com/content/{content_id}"
             driver.get(url)
             time.sleep(2)
+            try:
+                # 1. '첫화부터' 버튼을 클릭하여 정렬 기준 메뉴를 연다.
+                filter_button = driver.find_element(By.XPATH, "//span[contains(text(), '첫화부터')]")
+                filter_button.click()
+                time.sleep(2)  # 메뉴가 열릴 시간을 기다림
 
+                # 2. '최신 순' 옵션 클릭
+                latest_option = driver.find_element(By.XPATH, "//div[contains(text(), '최신 순')]")
+                latest_option.click()
+                time.sleep(2)  # 정렬이 변경될 시간을 기다림
+            except:
+                # 1. '첫화부터' 버튼을 클릭하여 정렬 기준 메뉴를 연다.
+                filter_button = driver.find_element(By.XPATH, "//span[contains(text(), '최신 순')]")
+                filter_button.click()
+                time.sleep(2)  # 메뉴가 열릴 시간을 기다림
+
+                # 2. '최신 순' 옵션 클릭
+                latest_option = driver.find_element(By.XPATH, "//div[contains(text(), '최신 순')]")
+                latest_option.click()
+                time.sleep(2)  # 정렬이 변경될 시간을 기다림
+            
             try:
                 title = remove_commas(driver.find_element(By.CSS_SELECTOR, "span.font-large3-bold.mb-3pxr.text-ellipsis.break-all.text-el-70.line-clamp-2").text)
             except:
@@ -141,6 +165,25 @@ with open(detail_info_file, mode="a", newline='', encoding='utf-8') as file:
             except:
                 total_episodes = '정보없음'
 
+            try:
+                # ul 요소 내의 모든 li 요소를 찾습니다.
+                li_elements = driver.find_elements(By.XPATH, "//ul[contains(@class, 'flex')]/li")
+
+                # 날짜 추출 정규 표현식 (YY.MM.DD 형식)
+                date_pattern = re.compile(r'\d{2}\.\d{2}\.\d{2}')
+
+                for li in li_elements:
+                    # 각 li 내에서 날짜 텍스트를 추출합니다.
+                    date_element = li.find_element(By.XPATH, ".//span[contains(@class, 'align-middle')]")
+                    date_text = date_element.text.strip()
+
+                    # 날짜 형식에 맞는 경우 첫 번째 날짜만 출력하고 중단
+                    if date_pattern.match(date_text):
+                        print(f"발견된 첫 번째 날짜: {date_text}")
+                        break  # 첫 번째 날짜를 찾으면 반복 종료
+            except Exception as e:
+                date_text = '정보없음'
+
     
             # 뱃지 구분: 3다무, 기다무 여부 확인
             badges = []
@@ -155,6 +198,25 @@ with open(detail_info_file, mode="a", newline='', encoding='utf-8') as file:
             except:
                 pass
             badges_str = "/".join(badges) if badges else "없음"
+
+            # 총 조회수 추출
+            try:
+                viewer_div = driver.find_element(By.CSS_SELECTOR, "div.flex.items-center img[alt='열람자']")
+                view_count_span = viewer_div.find_element(By.XPATH, "./following-sibling::span")
+                view_count = view_count_span.text.strip()
+            except Exception as e:
+                view_count = "정보없음"
+
+            # 1. 동일한 클래스 이름을 가진 요소를 모두 찾기
+            try:
+                elements = driver.find_elements(By.CSS_SELECTOR, "span.text-ellipsis.break-all.line-clamp-1.font-small2-bold.text-el-70")
+
+                # 두 번째 요소는 댓글 수 (comment_count), 쉼표 제거
+                comment_count = elements[1].text.replace(",", "").replace('전체 ', '').strip()
+                print(f"총 댓글 수: {comment_count}")
+            except Exception as e:
+                comment_count = '정보없음'
+
     
             # 추가 정보 URL로 이동 (tab_type=about)
             additional_info_url = f"https://page.kakao.com/content/{content_id}?tab_type=about"
@@ -239,7 +301,10 @@ with open(detail_info_file, mode="a", newline='', encoding='utf-8') as file:
                 remove_commas(title), 
                 remove_commas(author), 
                 total_episodes, 
-                age_limit, 
+                age_limit,
+                view_count,
+                comment_count,
+                date_text,
                 remove_commas(serialization_status), 
                 remove_commas(cycle), 
                 remove_commas(badges_str), 
@@ -249,7 +314,7 @@ with open(detail_info_file, mode="a", newline='', encoding='utf-8') as file:
     
             # 진행 상황 퍼센트로 출력
             progress_percentage = (index + 1) / total_webtoons * 100
-            print(f"Content ID: {content_id}, Title: {title}, Author: {author}, Episodes: {total_episodes}, Age Limit: {age_limit}, Status: {serialization_status}, Cycle: {cycle}, Badges: {badges_str}, Brief: {brief_text}, Hashtags: {hashtags}")
+            print(f"Content ID: {content_id}, Title: {title}, Author: {author}, Episodes: {total_episodes}, Age Limit: {age_limit}, view_cuont : {view_count}, comment_count : {comment_count}, Status: {serialization_status}, Cycle: {cycle}, Badges: {badges_str}, Brief: {brief_text}, Hashtags: {hashtags}")
             print(f"진행 상황: {progress_percentage:.2f}% 완료 ({index + 1}/{total_webtoons})")
         except WebDriverException as e:
             print(f"WebDriverException 발생. 재시도 중... {content_id}, 오류: {e}")
