@@ -23,7 +23,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .formLogin(form -> form.loginPage("/signin").defaultSuccessUrl("/").permitAll())
-                .logout(logout -> logout.logoutUrl("/signout").permitAll());
+                .logout(logout -> logout.deleteCookies("JSESSIONID"));
 
         return http.build();
     }
