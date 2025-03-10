@@ -1,9 +1,8 @@
-package com.webtoon.controller.User;
+package com.webtoon.sociallogin.User;
 
-import com.webtoon.domain.User.Member;
 import com.webtoon.dto.Login.SocialLogin.*;
 import com.webtoon.security.JwtUtils;
-import com.webtoon.service.SocialLogin.SocialLoginService;
+import com.webtoon.sociallogin.SocialLoginService;
 import com.webtoon.service.User.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,10 +15,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.Optional;
 
 @Controller
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})

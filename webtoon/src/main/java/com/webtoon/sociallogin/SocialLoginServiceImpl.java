@@ -1,4 +1,4 @@
-package com.webtoon.service.SocialLogin;
+package com.webtoon.sociallogin;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;

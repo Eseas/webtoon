@@ -29,6 +29,22 @@ login_url = "https://accounts.kakao.com/login/?continue=https%3A%2F%2Fkauth.kaka
 driver.get(login_url)
 print("카카오페이지 로그인 페이지에 접속했습니다. 로그인 후 완료될 때까지 기다립니다.")
 
+# Locate the username and password input fields
+login_id_input = driver.find_element(By.ID, "loginId--1")
+password_input = driver.find_element(By.ID, "password--2")
+                    
+# Input login credentials (replace 'your_username' and 'your_password' with actual credentials)
+login_id_input.clear()
+login_id_input.send_keys("tmd9280@naver.com")  # Replace with your actual login ID
+password_input.clear()
+password_input.send_keys("tt1403")  # Replace with your actual password
+                    
+# Locate and click the login button
+login_button = driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
+login_button.click()
+                    
+print("아이디와 비밀번호 입력 후 로그인 버튼 클릭했습니다. 로그인 완료될 때까지 기다립니다.")
+
 # 로그인 확인: 아래 화살표 이미지가 나타날 때까지 대기
 while True:
     try:
@@ -45,7 +61,7 @@ output_dir = os.path.join(os.getcwd(), 'crawling')
 os.makedirs(output_dir, exist_ok=True)
 
 # 결과를 저장할 CSV 파일 경로
-detail_info_file = os.path.join(output_dir, "kakaopage_webtoons_finish_crawl_result_updated.csv")
+detail_info_file = os.path.join(output_dir, "kakaopage_webtoons_detail_crawl_result.csv")
 
 file_exists = os.path.isfile(detail_info_file)
 
@@ -108,11 +124,55 @@ with open(detail_info_file, mode="a", newline='', encoding='utf-8') as file:
 
     # 파일이 없을 때만 헤더를 추가
     if not file_exists:
-        writer.writerow(["contentid", "title", "author", "total_episodes", "age_limit", "view_count", "comment_count", "last_upload_day", "serialization_status", "cycle", "badges", "brief_text", "hashtags"])
+        writer.writerow(["contentid", "title", "author", "total_episodes", "genre", "age_limit", "view_count", "comment_count", "last_upload_day", "serialization_status", "cycle", "badges", "brief_text", "hashtags"])
 
     # 각 contentId에 대해 크롤링 수행
     for index, content_id in enumerate(content_ids):
         try:
+            while True:
+                try:
+                    # Check for the arrow icon to confirm login
+                    arrow_icons = driver.find_elements(By.CSS_SELECTOR, "img[alt='아래 화살표'][width='12'][height='12']")
+                    if arrow_icons:
+                        print("로그인 완료. 크롤링을 시작합니다.")
+                        break
+                    else:
+                        # If not logged in, open the login page and enter login credentials
+                        driver.get(login_url)
+                        print("카카오페이지 로그인 페이지에 접속했습니다. 로그인 후 완료될 때까지 기다립니다.")
+
+                        # Locate the username and password input fields
+                        login_id_input = driver.find_element(By.ID, "loginId--1")
+                        password_input = driver.find_element(By.ID, "password--2")
+                    
+                        # Input login credentials (replace 'your_username' and 'your_password' with actual credentials)
+                        login_id_input.clear()
+                        login_id_input.send_keys("tmd9280@naver.com")  # Replace with your actual login ID
+                        password_input.clear()
+                        password_input.send_keys("tt1403")  # Replace with your actual password
+                    
+                        # Locate and click the login button
+                        login_button = driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
+                        login_button.click()
+                    
+                        print("아이디와 비밀번호 입력 후 로그인 버튼 클릭했습니다. 로그인 완료될 때까지 기다립니다.")
+                        time.sleep(5)
+                except Exception as e:
+                    driver.get(login_url)
+                    print("카카오페이지 로그인 페이지에 접속했습니다. 로그인 후 완료될 때까지 기다립니다.")
+                    time.sleep(5)
+
+            while True:
+                try:
+                # 성인 인증 버튼 (여기서는 '성인인증' 텍스트로 확인하지만, 실제 버튼의 텍스트나 요소는 다를 수 있습니다)
+                    adult_verification_button = driver.find_element(By.XPATH, "//button[contains(text(), '성인 인증')]")
+                    if adult_verification_button:
+                        print("성인 인증이 필요합니다. 인증을 완료한 후 진행됩니다.")
+                    time.sleep(5)  # 성인 인증 완료 후 기다리기
+                except:
+                    print("성인 인증이 필요하지 않습니다. 크롤링을 계속 진행합니다.")
+                    break
+
             if content_id in existing_content_ids:
                 continue
 
@@ -144,6 +204,15 @@ with open(detail_info_file, mode="a", newline='', encoding='utf-8') as file:
                 title = remove_commas(driver.find_element(By.CSS_SELECTOR, "span.font-large3-bold.mb-3pxr.text-ellipsis.break-all.text-el-70.line-clamp-2").text)
             except:
                 title = '정보없음'
+
+            try:
+                genre_element = driver.find_element(By.CSS_SELECTOR, "div.line-clamp-1.text-ellipsis.text-el-70.opacity-70")
+                genre_text = " / ".join([span.text.strip() for span in genre_element.find_elements(By.TAG_NAME, "span")])
+                if not genre_text:
+                    genre_text = "정보없음"
+            except Exception as e:
+                genre_text = "정보없음"
+                print(f"장르 정보 추출 실패: {e}")
     
             # 연재주기 추출 및 저장
             try:
@@ -269,7 +338,7 @@ with open(detail_info_file, mode="a", newline='', encoding='utf-8') as file:
     
             # 해당 웹툰의 연령 제한 가져오기
             age_limit = age_limits[index]
-            '''
+            
             try:
                 image_element = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "img[alt='썸네일']"))
@@ -294,13 +363,14 @@ with open(detail_info_file, mode="a", newline='', encoding='utf-8') as file:
                     print(f"이미지 다운로드를 여러 번 시도했으나 실패: {image_filename}")
             else:
                 print(f"이미지 URL을 찾을 수 없습니다: {content_id}")
-            '''
+            
             # CSV 파일에 저장 (쉼표 제거 후)
             writer.writerow([
                 content_id, 
                 remove_commas(title), 
                 remove_commas(author), 
-                total_episodes, 
+                total_episodes,
+                remove_commas(genre_text),
                 age_limit,
                 view_count,
                 comment_count,
@@ -314,7 +384,7 @@ with open(detail_info_file, mode="a", newline='', encoding='utf-8') as file:
     
             # 진행 상황 퍼센트로 출력
             progress_percentage = (index + 1) / total_webtoons * 100
-            print(f"Content ID: {content_id}, Title: {title}, Author: {author}, Episodes: {total_episodes}, Age Limit: {age_limit}, view_cuont : {view_count}, comment_count : {comment_count}, Status: {serialization_status}, Cycle: {cycle}, Badges: {badges_str}, Brief: {brief_text}, Hashtags: {hashtags}")
+            print(f"Content ID: {content_id}, Title: {title}, Author: {author}, Episodes: {total_episodes}, genre : {genre_text}, Age Limit: {age_limit}, view_cuont : {view_count}, comment_count : {comment_count}, Status: {serialization_status}, Cycle: {cycle}, Badges: {badges_str}, Brief: {brief_text}, Hashtags: {hashtags}")
             print(f"진행 상황: {progress_percentage:.2f}% 완료 ({index + 1}/{total_webtoons})")
         except WebDriverException as e:
             print(f"WebDriverException 발생. 재시도 중... {content_id}, 오류: {e}")

@@ -1,4 +1,4 @@
-package com.webtoon.controller.User;
+package com.webtoon.sociallogin.User;
 
 import com.webtoon.domain.User.Member;
 import com.webtoon.dto.Login.LoginDto;
@@ -16,8 +16,6 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
