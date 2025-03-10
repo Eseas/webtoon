@@ -3,7 +3,7 @@ package com.webtoon.domain.login;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-public class LoginDto {
+public class Login {
 
     @Getter
     @NoArgsConstructor
