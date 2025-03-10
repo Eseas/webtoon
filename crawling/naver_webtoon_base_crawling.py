@@ -14,7 +14,7 @@ options = webdriver.ChromeOptions()
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
 # 요일과 dailyPlus 페이지 URL 리스트
-tabs = ["mon", "tue", "wed", "thu", "fri", "sat", "sun", "dailyPlus"]
+tabs = ["mon", "tue", "wed", "thu", "fri", "sat", "sun", "dailyPlus", "finish"]
 
 webtoon_data = []
 
@@ -28,7 +28,8 @@ def map_day(tab_value):
         "fri": 5,
         "sat": 6,
         "sun": 7,
-        "dailyPlus": 8  # dailyPlus는 8로 매핑
+        "dailyPlus": 8,  # dailyPlus는 8로 매핑
+        "finish": 9
     }
     return day_mapping.get(tab_value, 0)  # 기본값은 0 (해당 없음)
 
@@ -40,9 +41,18 @@ for tab in tabs:
 
     # 웹툰 리스트 요소가 로드될 때까지 기다림
     try:
-        WebDriverWait(driver, 30).until(
+        
+        last_height = driver.execute_script("return document.body.scrollHeight")
+        while True:
+            WebDriverWait(driver, 30).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, '[class*="ContentList__content_list"]'))
-        )
+            )
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(2)
+            new_height = driver.execute_script("return document.body.scrollHeight")
+            if new_height == last_height:
+                break
+            last_height = new_height
     except Exception as e:
         print(f"페이지 로드 중 오류 발생: {e}")
         continue

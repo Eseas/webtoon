@@ -1,4 +1,4 @@
-package com.webtoon.controller.User;
+package com.webtoon.sociallogin.User;
 
 import com.webtoon.domain.User.Member;
 import com.webtoon.dto.SignUp.IdCheckDto;

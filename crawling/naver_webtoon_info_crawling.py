@@ -12,7 +12,7 @@ import requests
 from webdriver_manager.chrome import ChromeDriverManager
 
 # CSV 파일 경로 설정 (crawling 폴더 내의 파일 경로로 수정)
-csv_file_path = os.path.join(os.getcwd(), 'crawling', 'result', 'naver_webtoon_base_info.csv')
+csv_file_path = os.path.join(os.getcwd(), 'crawling', 'naver_webtoon_daily_base_info.csv')
 webtoon_data = pd.read_csv(csv_file_path)
 
 # 웹드라이버 설정 (크롬 사용 가정)
@@ -35,7 +35,7 @@ while True:
         print("로그인 대기 중...")
 
 # 이미지 저장 기본 경로
-base_image_path = r'C:\Users\user\Documents\webtoon\webtoon\src\main\resources\static\naver_main_image'
+base_image_path = r'C:\Users\LSY\Desktop\webtoon\webtoon\webtoon\src\main\resources\static\naver'
 
 # 크롤링 결과 저장할 리스트
 webtoon_info_list = []
@@ -116,7 +116,7 @@ for index, row in webtoon_data.iterrows():
         status = "완결"
     else:
         status = "연재 중"
-    '''
+    
     # 이미지 링크 가져오기    
     try:
         image_element = WebDriverWait(driver, 10).until(
@@ -142,7 +142,7 @@ for index, row in webtoon_data.iterrows():
         image_response = requests.get(image_url, headers=headers)
         with open(image_filename, 'wb') as file:
             file.write(image_response.content)
-    '''
+    
     # 해시태그 가져오기
     try:
         tags_element = driver.find_element(By.XPATH, "//*[contains(@class, 'TagGroup__tag_group')]")

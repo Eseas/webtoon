@@ -1,4 +1,4 @@
-package com.webtoon.service.SocialLogin;
+package com.webtoon.sociallogin;
 
 import com.webtoon.domain.User.Member;
 import com.webtoon.dto.Login.SocialLogin.GoogleAccountProfileResponse;
