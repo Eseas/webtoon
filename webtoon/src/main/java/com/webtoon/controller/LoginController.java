@@ -1,7 +1,7 @@
 package com.webtoon.controller;
 
 import com.webtoon.api.LoginFacade;
-import com.webtoon.domain.login.LoginDto;
+import com.webtoon.domain.login.Login;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ public class LoginController {
 
     @PostMapping("/signin")
     public ResponseEntity<String> singin(
-            @RequestBody LoginDto.Request loginDto,
+            @RequestBody Login.Request loginDto,
             HttpSession session
     ) {
         loginFacade.login(loginDto, session);
