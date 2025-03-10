@@ -1,7 +1,7 @@
 package com.webtoon.service.member;
 
 import com.webtoon.domain.entity.Member;
-import com.webtoon.domain.login.LoginDto;
+import com.webtoon.domain.login.Login;
 import com.webtoon.infrastructure.member.LoginService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,7 @@ public class LoginServiceImpl implements LoginService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 
     @Override
-    public Member login(LoginDto.Request request) {
+    public Member login(Login.Request request) {
         Member member = memberReader.readByloginId(request.getLoginId());
 
         // TODO - 회원가입 기능 이후 주석 해제
