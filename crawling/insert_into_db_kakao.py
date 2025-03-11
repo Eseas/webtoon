@@ -4,14 +4,30 @@ import pandas as pd
 import csv  # 추가: CSV 처리를 위한 모듈
 import time
 from psycopg2 import extras
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+host = os.getenv("host").strip('", ')
+dbname = os.getenv("dbname").strip('", ')
+user = os.getenv("user").strip('", ')
+password = os.getenv("password").strip('", ')
+port = os.getenv("port").strip('", ')
+
+print("host:", host)
+print("dbname:", dbname)
+print("user:", user)
+print("password:", password)
+print("port:", port)
 
 # PostgreSQL 연결 설정
 conn = psycopg2.connect(
-    host="localhost",
-    dbname="webtoon",
-    user="postgres",
-    password="a1234",
-    port="5432"
+    host=host,
+    dbname=dbname,
+    user=user,
+    password=password,
+    port=port
 )
 
 # 커서 생성
@@ -39,38 +55,55 @@ def parse_authors(author_string):
 def update_or_insert_hashtags(webtoon_id, hashtags_list):
     for hashtag in hashtags_list:
         hashtag = hashtag.replace('#', '')  # 해시태그에서 '#' 제거
-        cur.execute("SELECT id, webtoons FROM webtoon.hashtags WHERE name = %s", (hashtag,))
+        cur.execute("SELECT id, webtoons FROM webtoon.hash_tag WHERE name = %s", (hashtag,))
         result = cur.fetchone()
         if result:
             hashtag_id, webtoons = result
             if webtoon_id not in webtoons:
                 webtoons.append(webtoon_id)
                 cur.execute(
-                    "UPDATE webtoon.hashtags SET webtoons = %s, updated_dt = NOW(), updated_id = 'system' WHERE id = %s", 
+                    "UPDATE webtoon.hash_tag SET webtoons = %s, updated_dt = NOW(), updated_id = 'system' WHERE id = %s", 
                     (webtoons, hashtag_id))  # psycopg2가 Python 리스트를 PostgreSQL 배열로 처리
         else:
             cur.execute(
-                "INSERT INTO webtoon.hashtags (name, webtoons, created_dt, created_id, updated_dt, updated_id) VALUES (%s, %s, NOW(), %s, NOW(), %s) RETURNING id",
+                "INSERT INTO webtoon.hash_tag (name, webtoons, created_dt, created_id, updated_dt, updated_id) VALUES (%s, %s, NOW(), %s, NOW(), %s) RETURNING id",
                 (hashtag, [webtoon_id], 'system', 'system'))  # 여기서도 Python 리스트로 저장
 
 # cycle을 매핑하는 함수
 def map_cycle(cycle_str):
     cycle_mapping = {
-        "월": 1,
-        "화": 2,
-        "수": 3,
-        "목": 4,
-        "금": 5,
-        "토": 6,
-        "일": 7,
-        "완결": 0
+        "월": 0,
+        "화": 1,
+        "수": 2,
+        "목": 3,
+        "금": 4,
+        "토": 5,
+        "일": 6,
+        "완결": 9
     }
     # 공백 제거 및 매핑
-    return cycle_mapping.get(cycle_str.strip(), 0)  # 기본값은 0 (완결)
+    return cycle_mapping.get(cycle_str.strip(), 9)  # 기본값은 9 (완결)
+
+def map_role(role_str):
+    cycle_mapping = {
+        "글" : 0,
+        "그림" : 1,
+        "원작" : 2
+    }
+    # 공백 제거 및 매핑
+    return cycle_mapping.get(role_str.strip(), 0)
+
+def map_serial_status(status_str):
+    cycle_mapping = {
+        "연재": 0,
+        "완결": 1
+    }
+    # 공백 제거 및 매핑
+    return cycle_mapping.get(status_str.strip(), 0)
 
 # 웹툰이 이미 존재하는지 확인하는 함수
 def check_webtoon_exists(contentid):
-    cur.execute("SELECT EXISTS(SELECT 1 FROM webtoon.kakao_webtoon WHERE id = %s)", (contentid,))
+    cur.execute("SELECT EXISTS(SELECT 1 FROM webtoon.webtoon WHERE id = %s)", (contentid,))
     return cur.fetchone()[0]
 
 def update_or_insert_author(author_dict, webtoon_id):
@@ -93,44 +126,63 @@ def update_or_insert_author(author_dict, webtoon_id):
 
 
 # 웹툰 데이터를 삽입하는 함수
-def insert_webtoon_data(contentid, title, author_string, total_episodes, age_limit, serialization_status, cycle, badges, brief_text, hashtags):
+def insert_webtoon_data(contentid, title, author, total_episodes, genre_str, age_limit, view_count, comment_count, last_upload_day, serialization_status, cycle, badges, brief_text, hashtags):
     try:
         # 이미 존재하는지 확인
-        if check_webtoon_exists(contentid):
-            print(f"ContentID {contentid} already exists. Skipping insertion.")
-            return
+        #if check_webtoon_exists(contentid):
+        #    print(f"ContentID {contentid} already exists. Skipping insertion.")
+        #    return
 
-        # 작가 정보 파싱
-        author_json = parse_authors(author_string)
-        author_dict = json.loads(author_json)
         hashtags_list = hashtags.split(' ')  # 해시태그가 공백으로 구분되어 있다고 가정
 
         # cycle 매핑
         mapped_cycle = map_cycle(cycle)
 
+        genre = genre_str.split('/')[1].strip()
+
         insert_query = '''
-        INSERT INTO webtoon.kakao_webtoon (id, title, author, total_episodes, status, upload_cycle, age_limit, biref_text, hashtags, created_dt, created_id, updated_dt, updated_id)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s, NOW(), %s)
-        '''
-        
-        data = (
-            contentid,
-            title,
-            author_json,
-            total_episodes,
-            serialization_status,
-            mapped_cycle,  # 매핑된 cycle 값 사용
-            age_limit,
-            brief_text,
-            json.dumps(hashtags_list, ensure_ascii=False),  # ensure_ascii=False 추가
-            'system',
-            'system'
+        INSERT INTO public.webtoon (
+            content_id, title, total_episode_count, genre, age_limit,
+            view_count, comment_count, last_upload_date, serial_status,
+            serial_cycle, serial_source, description
         )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (id) DO NOTHING
+        RETURNING id
+        ;
+        '''
 
-        cur.execute(insert_query, data)
+        cur.execute(insert_query, (
+            contentid, title, total_episodes, genre, age_limit,
+            view_count, comment_count, last_upload_day, map_serial_status(serialization_status),
+            mapped_cycle, 2, brief_text
+        ))
+        
+        webtoon_id = cur.fetchone()
 
-        update_or_insert_hashtags(contentid, hashtags_list)
-        update_or_insert_author(author_dict, contentid)  # 작가 정보 업데이트 또는 삽입
+        # 작가 정보 파싱
+        author_json = parse_authors(author)
+        author_dict = json.loads(author_json)
+        for author_name, role in author_dict.items():
+            insert_author_query = '''
+                INSERT INTO public.author(
+                    name
+                )
+                VALUES (%s)
+                RETURNING id;
+            '''
+            insert_webtoon_author_query = '''
+                INSERT INTO public.webtoon_author(
+                    author_id, webtoon_id, author_role
+                )
+                VALUES (%s, %s, %s)
+            '''
+            cur.execute(insert_author_query, (author_name,))
+            author_id = cur.fetchone()
+            cur.execute(insert_webtoon_author_query, (author_id, webtoon_id, map_role(role)))
+
+        #update_or_insert_hashtags(contentid, hashtags_list)
+        #update_or_insert_author(author_dict, contentid)  # 작가 정보 업데이트 또는 삽입
         print(f"ContentID {contentid} inserted successfully.")
     
     except Exception as e:
@@ -145,7 +197,7 @@ def insert_webtoon_data(contentid, title, author_string, total_episodes, age_lim
 
 # CSV 파일을 읽고 한 줄씩 삽입하는 함수
 def process_csv_and_insert():
-    csv_file_path = './crawling/result/kakaopage_webtoons_finish_crawl_result.csv'  # 업데이트된 CSV 파일 경로로 변경
+    csv_file_path = r'C:\Users\LSY\Desktop\webtoon\webtoon\crawling\crawling\kakaopage_webtoons_detail_crawl_result.csv'
     df = pd.read_csv(csv_file_path, encoding='utf-8')
 
     total_rows = len(df)  # 총 행 수
@@ -154,15 +206,20 @@ def process_csv_and_insert():
             insert_webtoon_data(
                 contentid=row['contentid'],
                 title=row['title'],
-                author_string=row['author'],
+                author=row['author'],
                 total_episodes=row['total_episodes'],
+                genre_str=row['genre'],
                 age_limit=row['age_limit'],
+                view_count=row['view_count'],
+                comment_count=row['comment_count'],
+                last_upload_day=row['last_upload_day'],
                 serialization_status=row['serialization_status'],
-                cycle=row['cycle'],  # 이미 매핑된 값인지 확인 필요
+                cycle=row['cycle'],
                 badges=row['badges'],
                 brief_text=row['brief_text'],
                 hashtags=row['hashtags']
             )
+            # contentid,title,author,total_episodes,genre,age_limit,view_count,comment_count,last_upload_day,serialization_status,cycle,badges,brief_text,hashtags
             # 진행 상황을 퍼센트로 출력
             progress = ((index + 1) / total_rows) * 100
             print(f"Progress: {index + 1} : {progress:.2f}%")  # 소수점 2자리까지 출력
