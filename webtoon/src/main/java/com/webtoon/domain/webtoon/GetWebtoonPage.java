@@ -1,30 +1,26 @@
 package com.webtoon.domain.webtoon;
 
-import com.webtoon.domain.entity.SerialSource;
+import com.webtoon.domain.entity.Author;
+import com.webtoon.domain.entity.constant.SerialSource;
 import com.webtoon.domain.entity.Webtoon;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-public class GetWebtoonPage {
+import java.util.List;
 
-    @Getter
-    @NoArgsConstructor
-    public static class Request {
-        private SerialSource serialSource;
-        private Integer page;
-    }
+public class GetWebtoonPage {
 
     @Getter
     @NoArgsConstructor
     public static class Response {
         private Long id;
         private String title;
-        private String author;
+        private List<String> author;
 
         private Response(Webtoon webtoon) {
-            this.id = webtoon.getId();
+            this.id = webtoon.getContentId();
             this.title = webtoon.getTitle();
-            this.author = webtoon.getAuthor().getName();
+            this.author = webtoon.getAuthors().stream().map(authors -> authors.getAuthor().getName()).toList();
         }
 
         public static Response create(Webtoon webtoon) {
