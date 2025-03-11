@@ -3,7 +3,6 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-/src/main/resouces/static/kakao_main_image
 
 ### STS ###
 .apt_generated
@@ -36,3 +35,4 @@ build/
 /Google_OAuth_Info.txt
 /src/main/resources/static/carousel/
 /src/main/resources/static/naver
+/crawling/crawling
