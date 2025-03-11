@@ -18,8 +18,8 @@ public class WebtoonFacade {
 
     private final WebtoonService webtoonService;
 
-    public PageResponse<GetWebtoonPage.Response> getWebtoonPage(GetWebtoonPage.Request request) {
-        Page<Webtoon> webtoonPage = webtoonService.getWebtoonPage(request.getPage());
+    public PageResponse<GetWebtoonPage.Response> getWebtoonPage(Integer page) {
+        Page<Webtoon> webtoonPage = webtoonService.getWebtoonPage(page);
 
         var responseList = webtoonPage.getContent().stream()
                 .map(GetWebtoonPage.Response::create).toList();

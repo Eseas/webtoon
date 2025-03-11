@@ -1,12 +1,14 @@
 package com.webtoon.domain.entity;
 
 import com.webtoon.domain.entity.constant.SerialCycle;
+import com.webtoon.domain.entity.constant.SerialSource;
 import com.webtoon.domain.entity.constant.SerialStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @NoArgsConstructor
@@ -18,10 +20,12 @@ public class Webtoon extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private Long contentId;
+
     private String title;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Author author;
+    @OneToMany(mappedBy = "webtoon", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<WebtoonAuthor> authors;
 
     private SerialSource serialSource;
 
@@ -31,9 +35,9 @@ public class Webtoon extends BaseEntity {
 
     private Integer ageLimit;
 
-    private Long viewCount;
+    private String viewCount;
 
-    private Long commentCount;
+    private String commentCount;
 
     private LocalDate lastUploadDate;
 
@@ -41,5 +45,6 @@ public class Webtoon extends BaseEntity {
 
     private SerialCycle serialCycle;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 }
