@@ -14,11 +14,13 @@ public class GetWebtoonPage {
     @NoArgsConstructor
     public static class Response {
         private Long id;
+        private Long contentId;
         private String title;
         private List<String> author;
 
         private Response(Webtoon webtoon) {
-            this.id = webtoon.getContentId();
+            this.id = webtoon.getId();
+            this.contentId = webtoon.getContentId();
             this.title = webtoon.getTitle();
             this.author = webtoon.getAuthors().stream().map(authors -> authors.getAuthor().getName()).toList();
         }

@@ -2,6 +2,7 @@ package com.webtoon.controller;
 
 import com.webtoon.api.WebtoonFacade;
 import com.webtoon.domain.entity.Webtoon;
+import com.webtoon.domain.webtoon.GetWebtoonDetail;
 import com.webtoon.domain.webtoon.GetWebtoonPage;
 import com.webtoon.domain.webtoon.GetWebtoonRecommend;
 import com.webtoon.global.PageResponse;
@@ -28,6 +29,14 @@ public class WebtoonController {
     ) {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(webtoonFacade.getWebtoonPage(page));
+    }
+
+    @GetMapping("/webtoons/detail")
+    public ResponseEntity<GetWebtoonDetail.Response> getWebtoonDetail(
+            @RequestParam Long id
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(webtoonFacade.getWebtoonDetail(id));
     }
 
     @GetMapping("/recommend")

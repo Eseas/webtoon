@@ -25,6 +25,11 @@ public class WebtoonServiceImpl implements WebtoonService {
     private final WebtoonReader webtoonReader;
 
     @Override
+    public Webtoon getWebtoon(Long id) {
+        return webtoonReader.read(id);
+    }
+
+    @Override
     public Page<Webtoon> getWebtoonPage(Integer page) {
         Pageable pageable = PageRequest.of(page, GET_WEBTOON_SIZE.getNumber());
 

@@ -1,6 +1,7 @@
 package com.webtoon.api;
 
 import com.webtoon.domain.entity.Webtoon;
+import com.webtoon.domain.webtoon.GetWebtoonDetail;
 import com.webtoon.domain.webtoon.GetWebtoonPage;
 import com.webtoon.domain.webtoon.GetWebtoonRecommend;
 import com.webtoon.global.PageResponse;
@@ -26,6 +27,12 @@ public class WebtoonFacade {
                 .map(GetWebtoonPage.Response::create).toList();
 
         return new PageResponse<>(webtoonPage, responseList);
+    }
+
+    public GetWebtoonDetail.Response getWebtoonDetail(Long id) {
+        Webtoon webtoon = webtoonService.getWebtoon(id);
+
+        return GetWebtoonDetail.Response.toDto(webtoon);
     }
 
     public List<GetWebtoonRecommend.Response> getWebtoonRecommend(Long id) {
