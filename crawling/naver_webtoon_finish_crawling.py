@@ -32,7 +32,7 @@ while True:
         print("로그인 대기 중...")
 
 # 이미지 저장 기본 경로
-base_image_path = r'C:\Users\user\Documents\webtoon\webtoon\src\main\resources\static\naver_main_image'
+base_image_path = r'C:\Users\LSY\Desktop\webtoon\webtoon\webtoon\src\main\resources\static\naver'
 
 # 크롤링 결과 저장할 리스트
 hashtag_set = set()  # 해시태그 정보를 중복 없이 저장할 set
@@ -86,11 +86,15 @@ def crawl_webtoon_info(csv_file_path):
                 writer_elements = driver.find_elements(By.XPATH, "//*[contains(@class, 'ContentMetaInfo__category')]")
                 writers = []
                 for writer_element in writer_elements:
+                    link_element = writer_element.find_element(By.XPATH, ".//a")
+                    href = link_element.get_attribute("href")
+                    
+                    author_id = href.split("id=")[-1]
                     author_info = writer_element.text
                     author_name, author_role = author_info.split('∙')
                     author_name = author_name.strip().replace("\n", "")
                     author_role = author_role.strip().replace("\n", "")
-                    writers.append(f"{author_name} ({author_role})")
+                    writers.append(f"{author_name} ({author_role}) {author_id}")
                 writer = '/ '.join(writers)
             except:
                 writer = "정보 없음"

@@ -37,6 +37,20 @@ base_image_path = r'C:\Users\LSY\Desktop\webtoon\webtoon\webtoon\src\main\resour
 hashtag_set = set()  # 해시태그 정보를 중복 없이 저장할 set
 processed_ids = set()  # 이미 처리한 titleId 저장
 
+result_folder_path = os.path.join(os.getcwd(), 'crawling', 'result')
+if os.path.exists(result_folder_path):
+    for filename in os.listdir(result_folder_path):
+        if filename.endswith('.csv'):
+            file_path = os.path.join(result_folder_path, filename)
+            try:
+                df = pd.read_csv(file_path, dtype={'titleId': str})  # titleId를 문자열로 변환하여 로드
+                if 'titleId' in df.columns:
+                    processed_ids.update(df['titleId'].dropna().astype(str).tolist())  # NaN 제거 후 문자열 변환
+            except Exception as e:
+                print(f"파일 {filename} 불러오기 실패: {e}")
+
+print(f"초기 불러온 처리된 titleId 개수: {len(processed_ids)}")
+
 # 크롤링할 CSV 파일을 찾는 함수
 def find_webtoon_csv_files():
     csv_folder = os.path.join(os.getcwd(), 'crawling')
@@ -67,15 +81,15 @@ def crawl_webtoon_info(csv_file_path):
     }
 
     for index, row in webtoon_data.iterrows():
-        title_id = row['titleId']
+        title_id = str(row['titleId']).strip()  # titleId를 문자열(str)로 변환하여 비교
 
         # titleId 중복 체크: 이미 처리된 경우 건너뛰기
         if title_id in processed_ids:
             print(f"이미 처리된 titleId {title_id} 건너뜀.")
             continue
         else:
-            processed_ids.add(title_id)
-
+            print(f"새로운 id {title_id} 추가")
+            processed_ids.add(title_id)  # 중복 방지를 위해 집합에 추가
         # 웹툰 페이지로 이동
         url = f"https://comic.naver.com/webtoon/list?titleId={title_id}"
         driver.get(url)
