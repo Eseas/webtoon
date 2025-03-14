@@ -155,7 +155,7 @@ def insert_webtoon_data(contentid, title, author, total_episodes, genre_str, age
         cur.execute(insert_query, (
             contentid, title, total_episodes, genre, age_limit,
             view_count, comment_count, last_upload_day, map_serial_status(serialization_status),
-            mapped_cycle, 2, brief_text
+            mapped_cycle, 1, brief_text
         ))
         
         webtoon_id = cur.fetchone()

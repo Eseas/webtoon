@@ -1,188 +1,205 @@
 import psycopg2
 import json
 import pandas as pd
-import csv
-import time
-from psycopg2 import extras
 import re
+import os
+from dotenv import load_dotenv
 
-# PostgreSQL connection settings
+# 환경변수 로드
+load_dotenv()
+
+host = os.getenv("host").strip('", ')
+dbname = os.getenv("dbname").strip('", ')
+user = os.getenv("user").strip('", ')
+password = os.getenv("password").strip('", ')
+port = os.getenv("port").strip('", ')
+
+# PostgreSQL 연결 설정
 conn = psycopg2.connect(
-    host="localhost",
-    dbname="webtoon",
-    user="postgres",
-    password="a1234",
-    port="5432"
+    host=host,
+    dbname=dbname,
+    user=user,
+    password=password,
+    port=port
 )
 
-# Create cursor
 cur = conn.cursor()
 cur.execute("SET client_encoding TO 'UTF8';")
 
-# Function to parse author information and convert to JSON
+# 작가 정보를 파싱하는 함수 (규칙: "이름 (역할) 아이디")
 def parse_authors(author_string):
-    #print(author_string)
-    authors = re.split(r'\s*/\s*(?![^()]*\))', author_string)
-    author_dict = {}
-    for author in authors:
-        author = author.strip()
-        match = re.match(r'^(.*)\((.*?)\)$', author)
-        if match:
-            author_name = match.group(1).strip()
-            roles_str = match.group(2)
-            roles = set()
-            if '글/그림' in roles_str:
-                roles.update(['글', '그림'])
-            elif '글' in roles_str:
-                roles.add('글')
-            elif '그림' in roles_str:
-                roles.add('그림')
-            if '원작' in roles_str:
-                roles.add('원작')
+    authors_raw = author_string.strip().rstrip(',')
+    authors = authors_raw.split('/') if '/' in authors_raw else [authors_raw]
+    result = []
+    for a in authors:
+        a = a.strip()
+        m = re.match(r"^(.*?)\s*\((.*?)\)\s*(\S+)$", a)
+        if m:
+            name = m.group(1).strip()
+            role = m.group(2).strip()
+            author_id_val = m.group(3).strip()
+            result.append({"name": name, "role": role, "author_id": author_id_val})
+    return result
 
-            if author_name in author_dict:
-                author_dict[author_name].update(roles)
-            else:
-                author_dict[author_name] = roles
+def map_role(role_str):
+    role_mapping = {"글": 0, "그림": 1, "원작": 2}
+    return role_mapping.get(role_str.strip(), 0)
+
+# age_limit 파싱 함수: 문자열을 정수로 변환
+def parse_age_limit(age_limit_str):
+    print(age_limit_str)
+    mapping = {
+        "전체연령가": 0,
+        "12세 이용가": 12,
+        "15세 이용가": 15,
+        "18세 이용가": 19
+    }
+    return mapping.get(age_limit_str.strip(), 0)
+
+def parse_serial_cycle(weekday_str):
+    cycle_mapping = {
+        "월": "0",
+        "화": "1",
+        "수": "2",
+        "목": "3",
+        "금": "4",
+        "토": "5",
+        "일": "6"
+    }
+    # 콤마로 구분된 경우 분리, 아니라면 단일값 리스트 생성
+    days = [d.strip() for d in weekday_str.split(",")]
     
-    # Convert sets to lists for JSON serialization
-    author_dict = {key: list(value) for key, value in author_dict.items()}
-    return json.dumps(author_dict, ensure_ascii=False)
+    # 각 항목에서 첫 글자(요일 부분)를 추출하여 매핑 수행
+    mapped = [cycle_mapping.get(day[0], "9") for day in days]
+    return mapped
 
-# Function to update or insert hashtags
-def update_or_insert_hashtags(webtoon_id, hashtags_list):
-    for hashtag in hashtags_list:
-        hashtag = hashtag.replace('#', '')
-        cur.execute("SELECT id, webtoons FROM webtoon.hashtags WHERE name = %s", (hashtag,))
-        result = cur.fetchone()
-        if result:
-            hashtag_id, webtoons = result
-            if webtoon_id not in webtoons:
-                webtoons.append(webtoon_id)
-                cur.execute(
-                    "UPDATE webtoon.hashtags SET webtoons = %s, updated_dt = NOW(), updated_id = 'system' WHERE id = %s", 
-                    (webtoons, hashtag_id))
-        else:
-            cur.execute(
-                "INSERT INTO webtoon.hashtags (name, webtoons, created_dt, created_id, updated_dt, updated_id) VALUES (%s, %s, NOW(), %s, NOW(), %s) RETURNING id",
-                (hashtag, [webtoon_id], 'system', 'system'))
+def map_serial_status(status_str):
+    cycle_mapping = {
+        "연재": 0,
+        "완결": 1
+    }
+    # 공백 제거 및 매핑
+    return cycle_mapping.get(status_str.strip(), 0)
 
-# Function to check if the webtoon already exists
+# 이미 삽입된 웹툰 확인 (content_id 기준)
 def check_webtoon_exists(contentid):
-    cur.execute("SELECT EXISTS(SELECT 1 FROM webtoon.naver_webtoon WHERE id = %s)", (contentid,))
+    cur.execute("SELECT EXISTS(SELECT 1 FROM public.webtoon WHERE content_id = %s)", (contentid,))
     return cur.fetchone()[0]
 
-# Function to update or insert author data
-def update_or_insert_author(author_dict, webtoon_id):
-    for author_name, roles in author_dict.items():
-        cur.execute("SELECT id, webtoon_id FROM webtoon.author WHERE name = %s", (author_name,))
-        result = cur.fetchone()
-        if result:
-            author_id, webtoon_ids = result
-            prefixed_webtoon_id = f"n_{webtoon_id}"
-            if prefixed_webtoon_id not in webtoon_ids:
-                webtoon_ids.append(prefixed_webtoon_id)
-                cur.execute(
-                    "UPDATE webtoon.author SET webtoon_id = %s, updated_dt = NOW(), updated_id = 'system' WHERE id = %s",
-                    (webtoon_ids, author_id))
-        else:
-            prefixed_webtoon_id = f"n_{webtoon_id}"
-            cur.execute(
-                "INSERT INTO webtoon.author (name, webtoon_id, created_dt, created_id, updated_dt, updated_id) VALUES (%s, %s::bigint[], NOW(), %s, NOW(), %s) RETURNING id",
-                (author_name, [int(prefixed_webtoon_id.split('_')[1])], 'system', 'system'))
-
-# Function to convert age_limit string to integer
-def convert_age_limit(age_limit_str):
-    age_mapping = {
-        '전체이용가': 0,
-        '12세 이용가': 12,
-        '15세 이용가': 15,
-        '18세 이용가': 19
-    }
-    return age_mapping.get(age_limit_str, 0)
-
-# Function to insert webtoon data
-def insert_webtoon_data(contentid, title, author_string, total_episodes, age_limit, serialization_status, brief_text, hashtags, interest_count, weekday):
-    data = None
+# 제공된 정보만 사용하여 단일 테이블에 삽입하는 함수  
+# 여기서는 CSV의 요일(weekday) 값을 바탕으로 serial_cycle 필드를 저장합니다.
+def insert_webtoon_data(contentid, title, writers, age_limit_str, brief_text,
+                        interest_count, total_episodes, status, weekday, hashtags):
     try:
-        # Check if webtoon already exists
-        if check_webtoon_exists(contentid):
-            print(f"ContentID {contentid} already exists. Skipping insertion.")
+        if not contentid or not title or not writers:
+            print(f"contentId : {contentid}, title : {title}, writers : {writers}")
+            print(f"ContentID {contentid} 필수 데이터 누락으로 건너뜀.")
             return
 
-        # Parse author information
-        author_json = parse_authors(author_string)
-        author_dict = json.loads(author_json)
+        if check_webtoon_exists(contentid):
+            print(f"ContentID {contentid} 이미 존재. 삽입 건너뜀.")
+            return
+
+        try:
+            total_eps = int(str(total_episodes).replace("총", "").replace("화", "").strip())
+        except Exception as e:
+            print(f"total_episodes 변환 오류 (contentid {contentid}): {e}")
+            return
+
+        # interest_count는 문자열 그대로 사용
+        interest = str(interest_count).strip()
+
         hashtags_list = hashtags.split(' ')
+        # 첫 번째 해시태그를 장르로 사용 (존재하지 않으면 None 처리)
+        genre = hashtags_list[0].lstrip('#') if hashtags_list and hashtags_list[0] != '' else None
 
-        # Convert age_limit to integer
-        age_limit_int = convert_age_limit(age_limit)
+        # 작가 정보는 JSON으로 저장 (파싱 후 저장)
+        parsed_authors = parse_authors(writers)
+        authors_json = json.dumps(parsed_authors, ensure_ascii=False)
 
+        # age_limit 파싱 (예: "전체연령가" -> 0, "12세 이용가" -> 12, 등)
+        age_limit = parse_age_limit(age_limit_str)
+
+        # 연재 요일 정보를 serial_cycle 필드로 저장 (정수 ordinal 값들, 콤마 구분)
+        serial_cycle = parse_serial_cycle(weekday)
+
+        # CSV에 제공된 컬럼만 사용하여 삽입  
+        # (serial_cycle과 hashtags 컬럼 추가)
         insert_query = '''
-        INSERT INTO webtoon.naver_webtoon (id, title, author, age_limit, total_episodes, brief_text, interest_count, status, hashtags, created_dt, created_id, updated_dt, updated_id, upload_day)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s, NOW(), %s, %s)
-        '''
-        
-        data = (
-            contentid,
-            title,
-            author_json,
-            age_limit_int,
-            total_episodes,
-            brief_text,
-            interest_count,
-            serialization_status,
-            json.dumps(hashtags_list, ensure_ascii=False),
-            'system',
-            'system',
-            weekday
+        INSERT INTO public.webtoon (
+            content_id, title, age_limit, total_episode_count,
+            description, interest_count, serial_source, serial_status, serial_cycle, genre
         )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id;
+        '''
+        cur.execute(insert_query, (
+            contentid, title, age_limit, total_eps,
+            brief_text, interest, 0, map_serial_status(status), serial_cycle, genre
+        ))
+        webtoon_pk = cur.fetchone()[0]
 
-        cur.execute(insert_query, data)
+        # 작가 정보 처리: 이미 존재하는 작가는 새로 삽입하지 않고 연결 테이블에만 추가
+        for auth in parsed_authors:
+            name = auth["name"]
+            role = auth["role"]
+            author_id_val = auth["author_id"]
 
-        update_or_insert_hashtags(contentid, hashtags_list)
-        update_or_insert_author(author_dict, contentid)
-        #print(f"ContentID {contentid} inserted successfully.")
-    
+            cur.execute("SELECT id FROM public.author WHERE author_id = %s", (author_id_val,))
+            result = cur.fetchone()
+            if result:
+                author_pk = result[0]
+            else:
+                insert_author_query = '''
+                    INSERT INTO public.author (name, author_id)
+                    VALUES (%s, %s)
+                    RETURNING id;
+                '''
+                cur.execute(insert_author_query, (name, author_id_val))
+                author_pk = cur.fetchone()[0]
+
+            insert_webtoon_author_query = '''
+                INSERT INTO public.webtoon_author (author_id, webtoon_id, author_role)
+                VALUES (%s, %s, %s)
+                ON CONFLICT DO NOTHING;
+            '''
+            cur.execute(insert_webtoon_author_query, (author_pk, webtoon_pk, map_role(role)))
+        
+        print(f"ContentID {contentid} 삽입 성공.")
     except Exception as e:
         conn.rollback()
-        print(f"Error inserting contentid {contentid}: {e}\nData: {data}")
+        print(f"ContentID {contentid} 삽입 오류: {e}")
         return
     else:
         conn.commit()
 
-# Function to read CSV and insert data
 def process_csv_and_insert():
-    csv_file_path = './crawling/result/naver_webtoon_crawl_result.csv'
+    csv_file_path = r'C:\Users\LSY\Desktop\webtoon\webtoon\crawling\crawling\result\naver_webtoon_daily_crawl_result.csv'
     df = pd.read_csv(csv_file_path, encoding='utf-8')
-
     total_rows = len(df)
     for index, row in df.iterrows():
+        row_dict = row.to_dict()
         try:
             insert_webtoon_data(
-                contentid=row['titleId'],
-                title=row['title'],
-                author_string=row['writers'],
-                total_episodes=int(row['total_episodes'].replace('총 ', '').replace('화', '').strip()),
-                age_limit=row['age_rating'],
-                serialization_status=row['status'],
-                brief_text=row['brief_text'],
-                hashtags=row['hashtags'],
-                interest_count=int(row.get('interest_count', '0').replace(',', '').strip()),
-                weekday=row['weekday'].strip()
+                contentid=row_dict['titleId'],
+                title=row_dict['title'],
+                writers=row_dict['writers'],
+                age_limit_str=row_dict['age_limit'],
+                brief_text=row_dict['brief_text'],
+                interest_count=row_dict['interest_count'],
+                total_episodes=row_dict['total_episodes'],
+                status=row_dict['status'],
+                weekday=row_dict['weekday'],
+                hashtags=row_dict['hashtags']
             )
-            progress = ((index + 1) / total_rows) * 100
-            #print(f"Progress: {index + 1} : {progress:.2f}%")
-
+            progress = ((index+1) / total_rows) * 100
+            print(f"Progress: {index+1} : {progress:.2f}%")
         except Exception as e:
-            print(f"Error processing row {index + 1}: {e}\nRow data: {row.to_dict()}")
+            print(f"Row {index+1} 처리 오류: {e}")
             continue
-
     conn.commit()
 
-# Run CSV processing and data insertion
 process_csv_and_insert()
 
-# Close cursor and connection
 cur.close()
 conn.close()
