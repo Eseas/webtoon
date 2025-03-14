@@ -1,6 +1,8 @@
 package com.webtoon.service.webtoon;
 
 import com.webtoon.domain.entity.Webtoon;
+import com.webtoon.domain.entity.constant.SerialCycle;
+import com.webtoon.domain.entity.constant.SerialSource;
 import com.webtoon.exception.BusinessException;
 import com.webtoon.infrastructure.webtoon.WebtoonRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +24,10 @@ public class WebtoonReaderImpl implements WebtoonReader {
     }
 
     @Override
-    public Page<Webtoon> readPage(Pageable pageable) {
-        return webtoonRepository.findAll(pageable);
+    public Page<Webtoon> readPage(SerialSource serialSource, SerialCycle serialCycle, Pageable pageable) {
+        String cycleParam = serialCycle == null ? "" : "%" + serialCycle.getOrder() + "%";
+
+        return webtoonRepository.findPageBySerialSourceAndSerialCycle(serialSource, cycleParam, pageable);
     }
 
     @Override

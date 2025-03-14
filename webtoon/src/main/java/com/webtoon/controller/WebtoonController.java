@@ -2,6 +2,8 @@ package com.webtoon.controller;
 
 import com.webtoon.api.WebtoonFacade;
 import com.webtoon.domain.entity.Webtoon;
+import com.webtoon.domain.entity.constant.SerialCycle;
+import com.webtoon.domain.entity.constant.SerialSource;
 import com.webtoon.domain.webtoon.GetWebtoonDetail;
 import com.webtoon.domain.webtoon.GetWebtoonPage;
 import com.webtoon.domain.webtoon.GetWebtoonRecommend;
@@ -25,10 +27,13 @@ public class WebtoonController {
 
     @GetMapping("/webtoons")
     public ResponseEntity<PageResponse<GetWebtoonPage.Response>> getWebtoonPage(
-            @RequestParam Integer page
+            @RequestParam(required = false) SerialSource publisher,
+            @RequestParam(required = false) SerialCycle day,
+            @RequestParam Integer page,
+            @RequestParam Integer offset
     ) {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(webtoonFacade.getWebtoonPage(page));
+                .body(webtoonFacade.getWebtoonPage(publisher, day, page, offset));
     }
 
     @GetMapping("/webtoons/detail")
@@ -39,7 +44,7 @@ public class WebtoonController {
                 .body(webtoonFacade.getWebtoonDetail(id));
     }
 
-    @GetMapping("/recommend")
+    @GetMapping("/webtoons/recommend")
     public ResponseEntity<List<GetWebtoonRecommend.Response>> recommendWebtoons(@RequestParam Long id) {
         return ResponseEntity.status(HttpStatus.OK).body(webtoonFacade.getWebtoonRecommend(id));
     }

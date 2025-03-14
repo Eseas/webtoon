@@ -4,6 +4,7 @@ public enum SerialSource {
     NAVER,
     KAKAOPAGE,
     KAKAOWEBTOON,
-    LEZHIN
+    LEZHIN,
+    ALL
     ;
 }
