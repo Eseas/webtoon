@@ -1,7 +1,8 @@
 package com.webtoon.service.webtoon;
 
 import com.webtoon.domain.entity.Webtoon;
-import com.webtoon.global.PageInfomation;
+import com.webtoon.domain.entity.constant.SerialCycle;
+import com.webtoon.domain.entity.constant.SerialSource;
 import com.webtoon.infrastructure.webtoon.WebtoonService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.text.similarity.CosineSimilarity;
@@ -16,8 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.webtoon.global.PageInfomation.GET_WEBTOON_SIZE;
-
 @Service
 @RequiredArgsConstructor
 public class WebtoonServiceImpl implements WebtoonService {
@@ -30,10 +29,10 @@ public class WebtoonServiceImpl implements WebtoonService {
     }
 
     @Override
-    public Page<Webtoon> getWebtoonPage(Integer page) {
-        Pageable pageable = PageRequest.of(page, GET_WEBTOON_SIZE.getNumber());
+    public Page<Webtoon> getWebtoonPage(SerialSource serialSource, SerialCycle serialCycle, Integer page, Integer offset) {
+        Pageable pageable = PageRequest.of(page, offset);
 
-        return webtoonReader.readPage(pageable);
+        return webtoonReader.readPage(serialSource, serialCycle, pageable);
     }
 
     @Override

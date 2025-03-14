@@ -17,6 +17,8 @@ public class Author extends BaseEntity {
 
     private String name;
 
+    private String authorId;
+
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WebtoonAuthor> webtoonAuthors;
 }

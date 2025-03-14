@@ -8,7 +8,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @NoArgsConstructor
@@ -35,6 +38,8 @@ public class Webtoon extends BaseEntity {
 
     private Integer ageLimit;
 
+    private String interestCount;
+
     private String viewCount;
 
     private String commentCount;
@@ -43,8 +48,21 @@ public class Webtoon extends BaseEntity {
 
     private SerialStatus serialStatus;
 
-    private SerialCycle serialCycle;
+    private String serialCycle;
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    // Transient getter: DB에 저장된 문자열을 List<SerialCycle>로 변환하여 반환
+    @Transient
+    public List<SerialCycle> getSerialCycleList() {
+        if (serialCycle == null || serialCycle.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(serialCycle.split(","))
+                .map(String::trim)
+                .map(Integer::parseInt)
+                .map(i -> SerialCycle.values()[i])
+                .collect(Collectors.toList());
+    }
 }

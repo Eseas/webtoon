@@ -2,6 +2,7 @@ package com.webtoon.domain.webtoon;
 
 import com.webtoon.domain.entity.Author;
 import com.webtoon.domain.entity.Webtoon;
+import com.webtoon.domain.entity.constant.SerialCycle;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -21,7 +22,7 @@ public class GetWebtoonDetail {
         Integer totalEpisodes;
         Integer ageLimit;
         String serialStatus;
-        String uploadCycle;
+        List<SerialCycle> uploadCycle;
         String description;
 
         private Response(Webtoon webtoon) {
@@ -37,7 +38,7 @@ public class GetWebtoonDetail {
             this.totalEpisodes = webtoon.getTotalEpisodeCount();
             this.ageLimit = webtoon.getAgeLimit();
             this.serialStatus = webtoon.getSerialStatus().name();
-            this.uploadCycle = webtoon.getSerialCycle().name();
+            this.uploadCycle = webtoon.getSerialCycleList();
             this.description = webtoon.getDescription();
         }
 

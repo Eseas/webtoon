@@ -1,6 +1,8 @@
 package com.webtoon.api;
 
 import com.webtoon.domain.entity.Webtoon;
+import com.webtoon.domain.entity.constant.SerialCycle;
+import com.webtoon.domain.entity.constant.SerialSource;
 import com.webtoon.domain.webtoon.GetWebtoonDetail;
 import com.webtoon.domain.webtoon.GetWebtoonPage;
 import com.webtoon.domain.webtoon.GetWebtoonRecommend;
@@ -20,8 +22,13 @@ public class WebtoonFacade {
 
     private final WebtoonService webtoonService;
 
-    public PageResponse<GetWebtoonPage.Response> getWebtoonPage(Integer page) {
-        Page<Webtoon> webtoonPage = webtoonService.getWebtoonPage(page);
+    public PageResponse<GetWebtoonPage.Response> getWebtoonPage(
+            SerialSource serialSource,
+            SerialCycle serialCycle,
+            Integer page,
+            Integer offset
+    ) {
+        Page<Webtoon> webtoonPage = webtoonService.getWebtoonPage(serialSource, serialCycle, page, offset);
 
         var responseList = webtoonPage.getContent().stream()
                 .map(GetWebtoonPage.Response::create).toList();
