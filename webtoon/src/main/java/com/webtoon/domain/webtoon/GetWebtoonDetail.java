@@ -3,6 +3,7 @@ package com.webtoon.domain.webtoon;
 import com.webtoon.domain.entity.Author;
 import com.webtoon.domain.entity.Webtoon;
 import com.webtoon.domain.entity.constant.SerialCycle;
+import com.webtoon.domain.entity.constant.SerialSource;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -15,15 +16,16 @@ public class GetWebtoonDetail {
     @Getter
     @NoArgsConstructor
     public static class Response {
-        Long id;
-        Long contentId;
-        String title;
-        Map<String, String> authorList;
-        Integer totalEpisodes;
-        Integer ageLimit;
-        String serialStatus;
-        List<SerialCycle> uploadCycle;
-        String description;
+        private Long id;
+        private Long contentId;
+        private String title;
+        private Map<String, String> authorList;
+        private Integer totalEpisodes;
+        private Integer ageLimit;
+        private String serialStatus;
+        private SerialSource serialSource;
+        private List<SerialCycle> uploadCycle;
+        private String description;
 
         private Response(Webtoon webtoon) {
             Map<String, String> authorList = new HashMap<>();
@@ -38,6 +40,7 @@ public class GetWebtoonDetail {
             this.totalEpisodes = webtoon.getTotalEpisodeCount();
             this.ageLimit = webtoon.getAgeLimit();
             this.serialStatus = webtoon.getSerialStatus().name();
+            this.serialSource = webtoon.getSerialSource();
             this.uploadCycle = webtoon.getSerialCycleList();
             this.description = webtoon.getDescription();
         }
