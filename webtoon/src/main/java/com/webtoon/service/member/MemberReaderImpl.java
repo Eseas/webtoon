@@ -15,6 +15,11 @@ public class MemberReaderImpl implements MemberReader {
     private final MemberRepository memberRepository;
 
     @Override
+    public boolean existMemberByLoginId(String loginId) {
+        return memberRepository.findByLoginId(loginId).isPresent();
+    }
+
+    @Override
     public Member readByloginId(String loginId) {
         return memberRepository.findByLoginId(loginId).orElseThrow(BusinessException::new);
     }
