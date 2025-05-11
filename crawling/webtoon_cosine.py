@@ -35,9 +35,12 @@ cur.execute("SET client_encoding TO 'UTF8';")
 
 def load_webtoon_data():
     select_query = '''
-        select * from public.webtoon;
+        SELECT contentid, title, author, total_episodes, genre, age_limit, 
+               last_upload_day, serialization_status, cycle, badges, 
+               brief_text, hashtags
+        FROM public.webtoon;
     '''
-    cur.execute(select_query,)
+    cur.execute(select_query)
     rows = cur.fetchall()
     col_names = [desc[0] for desc in cur.description]
 
@@ -49,7 +52,7 @@ def calculate_and_store_similarity():
 
     # TF-IDF 벡터화 (장르 + 설명 사용)
     tfidf = TfidfVectorizer(stop_words="english")
-    tfidf_matrix = tfidf.fit_transform(df["genre"] + " " + df["description"])
+    tfidf_matrix = tfidf.fit_transform(df["genre"] + " " + df["description"] + " " + df["title"])
 
     # 모든 웹툰 간의 코사인 유사도 계산
     cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
