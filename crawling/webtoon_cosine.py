@@ -35,9 +35,8 @@ cur.execute("SET client_encoding TO 'UTF8';")
 
 def load_webtoon_data():
     select_query = '''
-        SELECT contentid, title, author, total_episodes, genre, age_limit, 
-               last_upload_day, serialization_status, cycle, badges, 
-               brief_text, hashtags
+        SELECT content_id, title, serial_source, total_episode_count, genre, age_limit,
+               last_upload_date, serial_status, serial_cycle, description
         FROM public.webtoon;
     '''
     cur.execute(select_query)
